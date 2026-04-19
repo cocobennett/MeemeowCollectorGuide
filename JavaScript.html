@@ -23,55 +23,80 @@ function populateDropdown(data) {
     }
   });
 }
-// Function to handle showing the cats with headers
+
 function showCats(data) {
   document.getElementById('loading-container').style.display = 'none';
   const container = document.getElementById('list');
   container.style.display = 'block';
   container.innerHTML = '';
 
-  // 1. Sort data by Series (Index 1) so headers are grouped together
-  // We skip the header row (index 0)
-  let sortedData = data.slice(1).sort((a, b) => {
-    if (a[1] < b[1]) return -1;
-    if (a[1] > b[1]) return 1;
-    return 0;
-  });
-
+  let sortedData = data.slice(1).sort((a, b) => (a[1] < b[1] ? -1 : 1));
   let currentSeries = "";
-  const comingSoon = "https://placehold.co/150x150/B0E0E6/ffffff?text=Coming+Soon";
-  const linkError = "https://placehold.co/150x150/FFC0CB/ffffff?text=Link+Error";
 
   sortedData.forEach((row, i) => {
     const name = row[0];
     const series = row[1];
-    const forms = row[3]; // Column D
+    const formsString = row[3] || "Mystery Form";
     const imgUrl = row[5];
-    const isOwned = row[6];
+    const ownedForms = row[6]; // This is now an array of forms the user owns
 
-    // 2. If the series changes, insert a new <h2> header
     if (series !== currentSeries) {
       currentSeries = series;
       container.innerHTML += `<h2 class="series-header">${series}</h2>`;
     }
 
-    const displayImg = (imgUrl && imgUrl.trim() !== "") ? imgUrl : comingSoon;
+    // Split the forms string into an array (e.g., "Plush, Vinyl" -> ["Plush", "Vinyl"])
+    const formsArray = formsString.split(',').map(f => f.trim());
+
+    // Generate HTML for each form button
+    let formButtonsHtml = "";
+    formsArray.forEach((form, formIndex) => {
+      const isOwned = ownedForms.includes(form);
+      const uniqueId = `btn-${i}-${formIndex}`;
+      
+      // We'll clean the strings to remove any problematic single/double quotes
+      const cleanName = name.replace(/['"]/g, "");
+      const cleanForm = form.replace(/['"]/g, "");
+
+      formButtonsHtml += `
+        <button id="${uniqueId}" 
+                class="form-btn ${isOwned ? 'owned-btn' : ''}" 
+                onclick="markOwned('${cleanName}', '${cleanForm}', '${uniqueId}')" 
+                ${isOwned ? 'disabled' : ''}>
+          ${form} ${isOwned ? '🐾' : '+'}
+        </button>`;
+    });
 
     container.innerHTML += `
-      <div class="card ${isOwned ? 'owned' : ''}" id="card-${i}">
-        <img src="${displayImg}" class="meemeow-img" alt="${name}" onerror="this.src='${linkError}';">
+      <div class="card" id="card-${i}">
+        <img src="${imgUrl}" class="meemeow-img" alt="${name}">
         <p><b>${name}</b></p>
-        
-        <div class="forms-list">
-          <small>Available as:</small><br>
-          <span class="forms-text">${forms || "Mystery Form"}</span>
+        <div class="forms-container">
+          ${formButtonsHtml}
         </div>
-
-        <button id="btn-${i}" onclick="markOwned('${name}', ${i})" ${isOwned ? 'disabled' : ''}>
-          ${isOwned ? 'In Collection! 🐾' : 'Collect!'}
-        </button>
       </div>`;
   });
+}
+
+// Updated to handle the specific form and button ID
+function markOwned(name, form, btnId) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return; // Safety check
+
+  btn.innerText = "Saving...";
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function() {
+      btn.innerText = form + " 🐾";
+      btn.classList.add('owned-btn');
+    })
+    .withFailureHandler(function(err) {
+      alert("Error saving: " + err.message);
+      btn.innerText = "Retry?";
+      btn.disabled = false;
+    })
+    .toggleOwned(name, form);
 }
 
 // Update applyFilters to work with headers
@@ -92,20 +117,6 @@ function applyFilters() {
   showCats([allMeeMeows[0], ...filteredData]);
 }
 
-function markOwned(name, index) {
-  // 1. Immediately update UI so it feels fast
-  const btn = document.getElementById('btn-' + index);
-  const card = document.getElementById('card-' + index);
-  
-  btn.innerText = "Saving...";
-  btn.disabled = true;
-
-  // 2. Tell the Google Sheet to save it
-  google.script.run.withSuccessHandler(function() {
-    btn.innerText = "In Collection! 🐾";
-    card.classList.add('owned');
-  }).toggleOwned(name);
-}
       
       function filterCats() {
   // 1. Get the text from the search bar
