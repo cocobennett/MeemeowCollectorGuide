@@ -1,0 +1,154 @@
+<style>
+  body { background-color: #FFC0CB; font-family: 'Comic Sans MS', cursive; }
+  .card { border: 2px solid #B0E0E6; border-radius: 15px; margin: 10px; padding: 10px; background: white; display: inline-block; width: 200px; }
+  h1 { color: #fff; text-shadow: 2px 2px #B0E0E6; text-align: center; }
+  .meemeow-img {
+    width: 100%;
+    min-height: 150px;
+    background-color: var(--coco-blue); /* Shows blue if image fails */
+    border-radius: 10px;
+    object-fit: contain;
+  }
+  /* --- Coco's Cute Loading Star --- */
+
+:root {
+  --coco-pink: #FFC0CB;
+  --coco-blue: #B0E0E6;
+}
+
+#loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 50vh; /* Centers vertically */
+}
+
+.coco-star {
+  width: 50px;
+  height: 50px;
+  background: var(--coco-pink);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  animation: spin-pulse 1.5s infinite ease-in-out;
+  border: 4px solid var(--coco-blue); /* Outline color */
+}
+
+/* The Magic Animation */
+@keyframes spin-pulse {
+  0% { transform: rotate(0deg) scale(1); background: var(--coco-pink); }
+  50% { transform: rotate(180deg) scale(1.3); background: var(--coco-blue); } /* Swaps color at peak */
+  100% { transform: rotate(360deg) scale(1); background: var(--coco-pink); }
+}
+
+.card.owned {
+  border: 3px solid #FFC0CB; /* Pink border */
+  box-shadow: 0 0 15px rgba(255, 192, 203, 0.8); /* Whimsical glow */
+  background-color: #fff9fb;
+}
+
+.card.owned button {
+  background-color: #B0E0E6; /* Changes button to blue */
+  cursor: default;
+}
+
+.search-container {
+  text-align: center;
+  margin: 20px 0;
+}
+
+#searchInput {
+  width: 80%;
+  max-width: 400px;
+  padding: 12px 20px;
+  border: 3px solid var(--coco-blue);
+  border-radius: 25px; /* Extra rounded for that cutesy look */
+  font-family: 'Comic Sans MS', cursive;
+  font-size: 16px;
+  outline: none;
+  transition: box-shadow 0.3s ease;
+}
+
+#searchInput:focus {
+  border-color: var(--coco-pink);
+  box-shadow: 0 0 10px rgba(255, 192, 203, 0.5);
+}
+.controls {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+#seriesFilter {
+  padding: 10px 15px;
+  border: 3px solid var(--coco-blue);
+  border-radius: 20px;
+  background-color: white;
+  font-family: 'Comic Sans MS', cursive;
+  color: #555;
+  cursor: pointer;
+  outline: none;
+}
+
+#seriesFilter:hover {
+  border-color: var(--coco-pink);
+}
+
+.series-header {
+  width: 98%;
+  color: white;
+  background-color: var(--coco-blue);
+  padding: 10px;
+  border-radius: 10px;
+  margin-top: 30px;
+  text-shadow: 2px 2px var(--coco-pink);
+  text-align: center;
+  clear: both; /* Ensures headers start on a new line */
+}
+
+.form-checklist {
+  text-align: left;
+  margin-top: 10px;
+  padding: 5px;
+  background: #fff9fb;
+  border-radius: 8px;
+  font-size: 0.85em;
+}
+
+.form-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 4px;
+  cursor: pointer;
+}
+
+.form-item input {
+  margin-right: 8px;
+  accent-color: var(--coco-pink); /* Makes checkboxes pink! */
+}
+
+.form-item.owned-text {
+  color: var(--coco-pink);
+  font-weight: bold;
+}
+
+.forms-list {
+  background-color: #fff9fb; /* Very light pink background */
+  border-radius: 8px;
+  padding: 8px;
+  margin: 10px 0;
+  font-size: 0.85em;
+  color: #555;
+  border: 1px dashed var(--coco-blue);
+}
+
+.forms-text {
+  color: var(--coco-pink);
+  font-weight: bold;
+}
+
+small {
+  color: #888;
+  font-style: italic;
+}
+</style>
