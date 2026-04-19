@@ -1,0 +1,129 @@
+<script>
+let allMeeMeows = []; // We'll store the data here so we can filter it easily
+
+google.script.run.withSuccessHandler(initializeStore).getMeeMeows();
+
+function initializeStore(data) {
+  allMeeMeows = data;
+  populateDropdown(data);
+  showCats(data);
+}
+
+// Automatically adds series names to your dropdown from the Sheet
+function populateDropdown(data) {
+  const dropdown = document.getElementById('seriesFilter');
+  const seriesList = [...new Set(data.slice(1).map(row => row[1]))]; // Get unique series from Column B
+  
+  seriesList.sort().forEach(series => {
+    if (series) {
+      let opt = document.createElement('option');
+      opt.value = series;
+      opt.innerHTML = series;
+      dropdown.appendChild(opt);
+    }
+  });
+}
+// Function to handle showing the cats with headers
+function showCats(data) {
+  document.getElementById('loading-container').style.display = 'none';
+  const container = document.getElementById('list');
+  container.style.display = 'block';
+  container.innerHTML = '';
+
+  // 1. Sort data by Series (Index 1) so headers are grouped together
+  // We skip the header row (index 0)
+  let sortedData = data.slice(1).sort((a, b) => {
+    if (a[1] < b[1]) return -1;
+    if (a[1] > b[1]) return 1;
+    return 0;
+  });
+
+  let currentSeries = "";
+  const comingSoon = "https://placehold.co/150x150/B0E0E6/ffffff?text=Coming+Soon";
+  const linkError = "https://placehold.co/150x150/FFC0CB/ffffff?text=Link+Error";
+
+  sortedData.forEach((row, i) => {
+    const name = row[0];
+    const series = row[1];
+    const forms = row[3]; // Column D
+    const imgUrl = row[5];
+    const isOwned = row[6];
+
+    // 2. If the series changes, insert a new <h2> header
+    if (series !== currentSeries) {
+      currentSeries = series;
+      container.innerHTML += `<h2 class="series-header">${series}</h2>`;
+    }
+
+    const displayImg = (imgUrl && imgUrl.trim() !== "") ? imgUrl : comingSoon;
+
+    container.innerHTML += `
+      <div class="card ${isOwned ? 'owned' : ''}" id="card-${i}">
+        <img src="${displayImg}" class="meemeow-img" alt="${name}" onerror="this.src='${linkError}';">
+        <p><b>${name}</b></p>
+        
+        <div class="forms-list">
+          <small>Available as:</small><br>
+          <span class="forms-text">${forms || "Mystery Form"}</span>
+        </div>
+
+        <button id="btn-${i}" onclick="markOwned('${name}', ${i})" ${isOwned ? 'disabled' : ''}>
+          ${isOwned ? 'In Collection! 🐾' : 'Collect!'}
+        </button>
+      </div>`;
+  });
+}
+
+// Update applyFilters to work with headers
+function applyFilters() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const seriesValue = document.getElementById('seriesFilter').value;
+
+  // Filter the original global array 'allMeeMeows'
+  const filteredData = allMeeMeows.filter((row, index) => {
+    if (index === 0) return false; // Skip original header
+    const matchesSearch = row[0].toLowerCase().includes(searchTerm);
+    const matchesSeries = (seriesValue === "all" || row[1] === seriesValue);
+    return matchesSearch && matchesSeries;
+  });
+
+  // Re-run showCats with ONLY the filtered data (this handles headers automatically!)
+  // We add back a dummy header row so the loop logic stays the same
+  showCats([allMeeMeows[0], ...filteredData]);
+}
+
+function markOwned(name, index) {
+  // 1. Immediately update UI so it feels fast
+  const btn = document.getElementById('btn-' + index);
+  const card = document.getElementById('card-' + index);
+  
+  btn.innerText = "Saving...";
+  btn.disabled = true;
+
+  // 2. Tell the Google Sheet to save it
+  google.script.run.withSuccessHandler(function() {
+    btn.innerText = "In Collection! 🐾";
+    card.classList.add('owned');
+  }).toggleOwned(name);
+}
+      
+      function filterCats() {
+  // 1. Get the text from the search bar
+  const input = document.getElementById('searchInput');
+  const filter = input.value.toLowerCase();
+  
+  // 2. Get all the cat cards
+  const cards = document.getElementsByClassName('card');
+
+  // 3. Loop through them and hide/show based on the name
+  for (let i = 0; i < cards.length; i++) {
+    const name = cards[i].getElementsByTagName('b')[0].innerText.toLowerCase();
+    
+    if (name.indexOf(filter) > -1) {
+      cards[i].style.display = "inline-block"; // Show
+    } else {
+      cards[i].style.display = "none"; // Hide
+    }
+  }
+}
+    </script>
