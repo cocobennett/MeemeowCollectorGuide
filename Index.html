@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <?!= include('Stylesheet'); ?>
+  </head>
+  <body>
+    <h1>✨ <?= userName ?>'s MeeMeow Collector's Guide ✨</h1>
+    
+
+    <div id="loading-container">
+      <div>Loading cats...</div>
+      <div class="coco-star"></div>
+    </div>
+
+    <div class="controls">
+  <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Search cats... 🐾">
+  
+  <select id="seriesFilter" onchange="applyFilters()">
+    <option value="all">All Series ✨</option>
+    </select>
+</div>
+
+    <div id="list" style="display: none;"></div>
+
+    <?!= include('JavaScript'); ?>
+  </body>
+</html>
