@@ -23,9 +23,43 @@
     <select id="formFilter" onchange="applyFilters()">
   <option value="all">All Forms ✨</option>
 </select>
+
+ <button onclick="openContactModal()" class="contact-btn">Contact Me 💌</button>
 </div>
 
     <div id="list" style="display: none;"></div>
+
+    <footer class="coco-footer">
+      <div class="footer-content">
+        <p>🐾 <b>MeeMeow Links</b> 🐾</p>
+        <div class="footer-links">
+          <a href="https://www.aphmeow.com/meemeows" target="_blank">Official Aphmau Website</a>
+          <a href="https://www.youtube.com/@CocosCreations1130" target="_blank">Watch the checklist maker's Youtube Channel, Coco's Creations!</a>
+          <a href="https://www.youtube.com/@Aphmau" target="_blank">Aphmau's Youtube Channel</a>
+        </div>
+        <p class="footer-credit">Created with ✨ for Coco's Creations</p>
+      </div>
+    </footer>
+
+<div id="contactModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeContactModal()">&times;</span>
+    <h3>Contact Coco 🐾</h3>
+    <p style="font-size: 0.9em; color: #666;">
+      I'm so glad you are using this checklist! Feel free to send me an email if I'm missing a cat or you want to suggest a feature!
+    </p>
+    
+    <div class="contact-form">
+      <label>Your Email:</label>
+      <input type="email" id="contactEmail" placeholder="your@email.com">
+      
+      <label>What's on your mind?</label>
+      <textarea id="contactDescription" rows="4" placeholder="Missing cat? New feature idea?"></textarea>
+      
+      <button onclick="submitContactForm()" id="submitBtn">Send Message ✨</button>
+    </div>
+  </div>
+</div>
 
     <?!= include('JavaScript'); ?>
   </body>
