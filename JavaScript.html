@@ -5,23 +5,62 @@ google.script.run.withSuccessHandler(initializeStore).getMeeMeows();
 
 function initializeStore(data) {
   allMeeMeows = data;
-  populateDropdown(data);
+  populateDropdowns(data); // Renamed to handle both
   showCats(data);
 }
 
-// Automatically adds series names to your dropdown from the Sheet
-function populateDropdown(data) {
-  const dropdown = document.getElementById('seriesFilter');
-  const seriesList = [...new Set(data.slice(1).map(row => row[1]))]; // Get unique series from Column B
+function populateDropdowns(data) {
+  const seriesDropdown = document.getElementById('seriesFilter');
+  const formDropdown = document.getElementById('formFilter');
   
-  seriesList.sort().forEach(series => {
+  // 1. Get unique Series
+  const seriesList = [...new Set(data.slice(1).map(row => row[1]))].sort();
+  
+  // 2. Get unique individual Forms
+  // We split by comma, trim whitespace, and flatten the array
+  const allFormsRaw = data.slice(1).map(row => row[3] ? row[3].split(',') : []);
+  const flatForms = allFormsRaw.flat().map(f => f.trim()).filter(f => f !== "");
+  const uniqueForms = [...new Set(flatForms)].sort();
+
+  // Populate Series
+  seriesList.forEach(series => {
     if (series) {
       let opt = document.createElement('option');
       opt.value = series;
       opt.innerHTML = series;
-      dropdown.appendChild(opt);
+      seriesDropdown.appendChild(opt);
     }
   });
+
+  // Populate Forms
+  uniqueForms.forEach(form => {
+    let opt = document.createElement('option');
+    opt.value = form;
+    opt.innerHTML = form;
+    formDropdown.appendChild(opt);
+  });
+}
+
+function applyFilters() {
+  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+  const seriesValue = document.getElementById('seriesFilter').value;
+  const formValue = document.getElementById('formFilter').value;
+
+  const filteredData = allMeeMeows.filter((row, index) => {
+    if (index === 0) return false; 
+    
+    // Clean quotes for comparison, just like we did for the buttons
+    const name = row[0].toLowerCase();
+    const catForms = row[3] ? row[3].split(',').map(f => f.trim()) : [];
+    
+    const matchesSearch = name.includes(searchTerm);
+    const matchesSeries = (seriesValue === "all" || row[1] === seriesValue);
+    const matchesForm = (formValue === "all" || catForms.includes(formValue));
+    
+    return matchesSearch && matchesSeries && matchesForm;
+  });
+
+  showCats([allMeeMeows[0], ...filteredData]);
 }
 
 function showCats(data) {
@@ -97,24 +136,6 @@ function markOwned(name, form, btnId) {
       btn.disabled = false;
     })
     .toggleOwned(name, form);
-}
-
-// Update applyFilters to work with headers
-function applyFilters() {
-  const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-  const seriesValue = document.getElementById('seriesFilter').value;
-
-  // Filter the original global array 'allMeeMeows'
-  const filteredData = allMeeMeows.filter((row, index) => {
-    if (index === 0) return false; // Skip original header
-    const matchesSearch = row[0].toLowerCase().includes(searchTerm);
-    const matchesSeries = (seriesValue === "all" || row[1] === seriesValue);
-    return matchesSearch && matchesSeries;
-  });
-
-  // Re-run showCats with ONLY the filtered data (this handles headers automatically!)
-  // We add back a dummy header row so the loop logic stays the same
-  showCats([allMeeMeows[0], ...filteredData]);
 }
 
       
