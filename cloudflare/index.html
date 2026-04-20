@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MeeMeow Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+  html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden; /* 🚨 THIS FIXES DOUBLE SCROLL */
+    font-family: sans-serif;
+  }
+
+  iframe {
+    width: 100%;
+    height: 100vh;
+    border: none;
+    display: block;
+	opacity: 0;
+  	transition: opacity 0.3s ease;
+  }
+
+  .loading {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #fff;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    z-index: 999;
+  }
+</style>
+</head>
+<body>
+
+<iframe 
+  src="https://script.google.com/macros/s/AKfycbwKVrqkAJPRb4bsXpDZX9IczyKwjZS3S_3jsG0pwrr53Cn9WfMStYQ2mN2buV6-M8w/exec"
+  onload="document.querySelector('.loading').style.display='none'">
+</iframe>
+
+<div id="loading" class="loading" style="display:none;">
+  Loading MeeMeow Tracker... 🐾
+</div>
+
+<script>
+  const loadingEl = document.getElementById('loading');
+
+  // Only show loading if iframe takes longer than 500ms
+  const loadingTimer = setTimeout(() => {
+    loadingEl.style.display = 'block';
+  }, 500);
+
+  const iframe = document.querySelector('iframe');
+
+  iframe.onload = () => {
+    clearTimeout(loadingTimer);
+    loadingEl.style.display = 'none';
+	iframe.style.opacity = 1;
+  };
+</script>
+
+</body>
+</html>

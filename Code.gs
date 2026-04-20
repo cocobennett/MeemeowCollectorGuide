@@ -6,9 +6,6 @@ function include(filename) {
 
 function doGet(e) {
   const template = HtmlService.createTemplateFromFile('Index');
-  
-  // Try to get the user's email
-  // Note: This only works if they've authorized the app!
   const userEmail = Session.getActiveUser().getEmail();
   
   let firstName = "Guest";
@@ -26,10 +23,9 @@ function doGet(e) {
 
   template.userName = firstName;
   template.isLoggedIn = isLoggedIn;
-  
-  // This helps the login link work correctly
   template.loginUrl = ScriptApp.getService().getUrl();
 
+  // EVALUATE WITH SECURITY HEADERS
   return template.evaluate()
       .setTitle(firstName + "'s MeeMeow Tracker")
       .addMetaTag('viewport', 'width=device-width, initial-scale=1')
