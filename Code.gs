@@ -4,28 +4,36 @@ function include(filename) {
       .getContent();
 }
 
-// 2. Use ONE combined doGet function
-function doGet() {
+function doGet(e) {
   const template = HtmlService.createTemplateFromFile('Index');
   
-  let firstName = "My"; 
+  // Try to get the user's email
+  // Note: This only works if they've authorized the app!
+  const userEmail = Session.getActiveUser().getEmail();
   
-  try {
-    // Fills the "Given Name" from Google Profile
-    const me = People.People.get('people/me', {personFields: 'names'});
-    firstName = me.names[0].givenName;
-  } catch (e) {
-    const email = Session.getActiveUser().getEmail();
-    firstName = email.split('@')[0];
-    firstName = firstName.charAt(0).toUpperCase() + firstName.slice(1);
+  let firstName = "Guest";
+  let isLoggedIn = false;
+
+  if (userEmail) {
+    isLoggedIn = true;
+    try {
+      const me = People.People.get('people/me', {personFields: 'names'});
+      firstName = me.names[0].givenName;
+    } catch (err) {
+      firstName = userEmail.split('@')[0];
+    }
   }
 
-  // Pass variables to the HTML template
   template.userName = firstName;
+  template.isLoggedIn = isLoggedIn;
+  
+  // This helps the login link work correctly
+  template.loginUrl = ScriptApp.getService().getUrl();
 
   return template.evaluate()
-    .setTitle(firstName + "'s MeeMeow Tracker")
-    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+      .setTitle(firstName + "'s MeeMeow Tracker")
+      .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 // ... keep your getMeeMeows and toggleOwned functions below ...

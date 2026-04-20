@@ -93,16 +93,19 @@ function showCats(data) {
 
     const formsArray = formsString.split(',').map(f => f.trim());
     let formButtonsHtml = "";
+
     formsArray.forEach((form, formIndex) => {
       const isOwned = ownedForms.includes(form);
       const uniqueId = `btn-${i}-${formIndex}`;
+
+      // FIX: You must define these clean variables inside the loop!
       const cleanName = name.replace(/['"]/g, "");
       const cleanForm = form.replace(/['"]/g, "");
 
       formButtonsHtml += `
         <button id="${uniqueId}" 
                 class="form-btn ${isOwned ? 'owned-btn' : ''}" 
-                onclick="markOwned('${cleanName}', '${cleanForm}', '${uniqueId}')" 
+                onclick="${canTrack ? `markOwned('${cleanName}', '${cleanForm}', '${uniqueId}')` : "alert('Login to track your cats!')"}" 
                 ${isOwned ? 'disabled' : ''}>
           ${form} ${isOwned ? '🐾' : '+'}
         </button>`;
