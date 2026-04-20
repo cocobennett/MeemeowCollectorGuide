@@ -16,6 +16,40 @@
   --coco-blue: #B0E0E6;
 }
 
+/* Remove display:flex from #list, we'll use it on the grids instead */
+#list {
+  display: block; 
+  padding: 10px;
+}
+
+/* This container holds one series of 8 cats */
+.series-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center; /* Centers the cards when they wrap */
+  gap: 12px;
+  margin-bottom: 30px;
+  width: 100%;
+}
+
+.card {
+  border: 2px solid #B0E0E6;
+  border-radius: 15px;
+  background: white;
+  padding: 10px;
+  box-sizing: border-box;
+  text-align: center;
+  
+  /* The "Secret Sauce" for Mobile */
+  flex: 1 1 150px;     /* Grows, shrinks, but tries to stay 150px wide */
+  max-width: 180px;    /* Prevents them from getting TOO huge on big screens */
+  min-width: 130px;    /* The absolute limit before it jumps to the next row */
+  
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* Keeps buttons aligned even with long names */
+}
+
 #loading-container {
   display: flex;
   justify-content: center;

@@ -71,29 +71,31 @@ function showCats(data) {
 
   let sortedData = data.slice(1).sort((a, b) => (a[1] < b[1] ? -1 : 1));
   let currentSeries = "";
+  let currentGrid = null;
 
   sortedData.forEach((row, i) => {
     const name = row[0];
     const series = row[1];
     const formsString = row[3] || "Mystery Form";
     const imgUrl = row[5];
-    const ownedForms = row[6]; // This is now an array of forms the user owns
+    const ownedForms = row[6];
 
+    // If the series changes, create a new header AND a new flex grid
     if (series !== currentSeries) {
       currentSeries = series;
       container.innerHTML += `<h2 class="series-header">${series}</h2>`;
+      
+      // Create a container specifically for this series' cards
+      currentGrid = document.createElement('div');
+      currentGrid.className = 'series-grid';
+      container.appendChild(currentGrid);
     }
 
-    // Split the forms string into an array (e.g., "Plush, Vinyl" -> ["Plush", "Vinyl"])
     const formsArray = formsString.split(',').map(f => f.trim());
-
-    // Generate HTML for each form button
     let formButtonsHtml = "";
     formsArray.forEach((form, formIndex) => {
       const isOwned = ownedForms.includes(form);
       const uniqueId = `btn-${i}-${formIndex}`;
-      
-      // We'll clean the strings to remove any problematic single/double quotes
       const cleanName = name.replace(/['"]/g, "");
       const cleanForm = form.replace(/['"]/g, "");
 
@@ -106,7 +108,8 @@ function showCats(data) {
         </button>`;
     });
 
-    container.innerHTML += `
+    // Add the card to the CURRENT grid, not the main container
+    currentGrid.innerHTML += `
       <div class="card" id="card-${i}">
         <img src="${imgUrl}" class="meemeow-img" alt="${name}">
         <p><b>${name}</b></p>
@@ -116,7 +119,6 @@ function showCats(data) {
       </div>`;
   });
 }
-
 // Updated to handle the specific form and button ID
 function markOwned(name, form, btnId) {
   const btn = document.getElementById(btnId);
