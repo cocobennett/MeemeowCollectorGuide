@@ -63,65 +63,7 @@ function applyFilters() {
   showCats([allMeeMeows[0], ...filteredData]);
 }
 
-function showCats(data) {
-  document.getElementById('loading-container').style.display = 'none';
-  const container = document.getElementById('list');
-  container.style.display = 'block';
-  container.innerHTML = '';
 
-  let sortedData = data.slice(1).sort((a, b) => (a[1] < b[1] ? -1 : 1));
-  let currentSeries = "";
-  let currentGrid = null;
-
-  sortedData.forEach((row, i) => {
-    const name = row[0];
-    const series = row[1];
-    const formsString = row[3] || "Mystery Form";
-    const imgUrl = row[5];
-    const ownedForms = row[6];
-
-    // If the series changes, create a new header AND a new flex grid
-    if (series !== currentSeries) {
-      currentSeries = series;
-      container.innerHTML += `<h2 class="series-header">${series}</h2>`;
-      
-      // Create a container specifically for this series' cards
-      currentGrid = document.createElement('div');
-      currentGrid.className = 'series-grid';
-      container.appendChild(currentGrid);
-    }
-
-    const formsArray = formsString.split(',').map(f => f.trim());
-    let formButtonsHtml = "";
-
-    formsArray.forEach((form, formIndex) => {
-      const isOwned = ownedForms.includes(form);
-      const uniqueId = `btn-${i}-${formIndex}`;
-
-      // FIX: You must define these clean variables inside the loop!
-      const cleanName = name.replace(/['"]/g, "");
-      const cleanForm = form.replace(/['"]/g, "");
-
-      formButtonsHtml += `
-        <button id="${uniqueId}" 
-                class="form-btn ${isOwned ? 'owned-btn' : ''}" 
-                onclick="${canTrack ? `markOwned('${cleanName}', '${cleanForm}', '${uniqueId}')` : "alert('Login to track your cats!')"}" 
-                ${isOwned ? 'disabled' : ''}>
-          ${form} ${isOwned ? '🐾' : '+'}
-        </button>`;
-    });
-
-    // Add the card to the CURRENT grid, not the main container
-    currentGrid.innerHTML += `
-      <div class="card" id="card-${i}">
-        <img src="${imgUrl}" class="meemeow-img" alt="${name}">
-        <p><b>${name}</b></p>
-        <div class="forms-container">
-          ${formButtonsHtml}
-        </div>
-      </div>`;
-  });
-}
 // Updated to handle the specific form and button ID
 function markOwned(name, form, btnId) {
   const btn = document.getElementById(btnId);
@@ -143,6 +85,67 @@ function markOwned(name, form, btnId) {
     .toggleOwned(name, form);
 }
 
+function showCats(data) {
+  document.getElementById('loading-container').style.display = 'none';
+  const container = document.getElementById('list');
+  container.style.display = 'block';
+  container.innerHTML = '';
+
+  let sortedData = data.slice(1).sort((a, b) => (a[1] < b[1] ? -1 : 1));
+  let currentSeries = "";
+  let currentGrid = null;
+
+  sortedData.forEach((row, i) => {
+    const name = row[0];
+    const series = row[1];
+    const formsString = row[3] || "Mystery Form";
+    const imgUrl = row[5];
+    const ownedForms = row[6] || [];
+
+    if (series !== currentSeries) {
+      currentSeries = series;
+      container.innerHTML += `<h2 class="series-header">${series}</h2>`;
+      currentGrid = document.createElement('div');
+      currentGrid.className = 'series-grid';
+      container.appendChild(currentGrid);
+    }
+
+    const formsArray = formsString.split(',').map(f => f.trim());
+    let trackingSection = "";
+
+    // ONLY build buttons if canTrack is true
+    if (canTrack) {
+      let formButtonsHtml = "";
+      formsArray.forEach((form, formIndex) => {
+        const isOwned = ownedForms.includes(form);
+        const uniqueId = `btn-${i}-${formIndex}`;
+        const cleanName = name.replace(/['"]/g, "");
+        const cleanForm = form.replace(/['"]/g, "");
+
+        formButtonsHtml += `
+          <button id="${uniqueId}" 
+                  class="form-btn ${isOwned ? 'owned-btn' : ''}" 
+                  onclick="markOwned('${cleanName}', '${cleanForm}', '${uniqueId}')" 
+                  ${isOwned ? 'disabled' : ''}>
+            ${form} ${isOwned ? '🐾' : '+'}
+          </button>`;
+      });
+      trackingSection = formButtonsHtml;
+    } else {
+      // This is all Guests will see
+      trackingSection = `<p style="font-size: 0.8em; color: #888; margin: 10px 0;">🐾 Login to track</p>`;
+    }
+
+    currentGrid.innerHTML += `
+      <div class="card" id="card-${i}">
+        <img src="${imgUrl}" class="meemeow-img" alt="${name}">
+        <p><b>${name}</b></p>
+        <div class="forms-container">
+          ${trackingSection}
+        </div>
+      </div>`;
+  });
+}
       
       function filterCats() {
   // 1. Get the text from the search bar

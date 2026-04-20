@@ -5,13 +5,19 @@
     <?!= include('Stylesheet'); ?>
   </head>
   <body>
+    <? if (!isLoggedIn) { ?>
+    <h1>✨  MeeMeow Collector's Guide ✨</h1>
+    <? } ?>
+    <? if (isLoggedIn) { ?>
     <h1>✨ <?= userName ?>'s MeeMeow Collector's Guide ✨</h1>
+    <? } ?>
     
 
-    <div id="loading-container">
-      <div>Loading cats...</div>
-      <div class="coco-star"></div>
-    </div>
+    <? if (!isLoggedIn) { ?>
+  <div class="login-banner">
+    🐾 Want to track your collection? <a href="https://accounts.google.com/AccountChooser?continue=<?= loginUrl ?>" target="_blank">Login with Google</a> to save your MeeMeows!
+  </div>
+<? } ?>
 
     <div class="controls">
   <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Search cats... 🐾">
@@ -26,6 +32,11 @@
 
  <button onclick="openContactModal()" class="contact-btn">Contact Me 💌</button>
 </div>
+
+<div id="loading-container">
+      <div>Loading cats...</div>
+      <div class="coco-star"></div>
+    </div>
 
     <div id="list" style="display: none;"></div>
 
@@ -60,6 +71,12 @@
     </div>
   </div>
 </div>
+<script>
+  // We use quotes around the template tag to ensure it's treated as a string, 
+  // then compare it to the string 'true'
+  const canTrack = "<?= isLoggedIn ?>" === "true";
+  console.log("Is User Logged In?", canTrack); // This will help us debug!
+</script>
 
     <?!= include('JavaScript'); ?>
   </body>
