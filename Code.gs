@@ -73,3 +73,23 @@ function toggleOwned(meemeowId, form) {
   const now = new Date();
   sheet.appendRow([userEmail, meemeowId, "Owned", form, now]);
 }
+
+// Add this to the bottom of Code.gs
+function sendContactEmail(userEmail, description) {
+  const myEmail = "cocoscreations1130@gmail.com";
+  const subject = "🐾 MeeMeow Tracker Feedback";
+  
+  const body = `
+    New message from your MeeMeow Tracker!
+    
+    From: ${userEmail}
+    Message: ${description}
+  `;
+  
+  MailApp.sendEmail({
+    to: myEmail,
+    subject: subject,
+    body: body,
+    replyTo: userEmail 
+  });
+}
