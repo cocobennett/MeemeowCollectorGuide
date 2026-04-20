@@ -158,4 +158,46 @@ function markOwned(name, form, btnId) {
     }
   }
 }
+
+function openContactModal() {
+  document.getElementById('contactModal').style.display = 'block';
+}
+
+function closeContactModal() {
+  document.getElementById('contactModal').style.display = 'none';
+}
+
+function submitContactForm() {
+  const email = document.getElementById('contactEmail').value;
+  const desc = document.getElementById('contactDescription').value;
+  const btn = document.getElementById('submitBtn');
+
+  if (!email || !desc) {
+    alert("Please fill out both fields! 🐾");
+    return;
+  }
+
+  btn.innerText = "Sending...";
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function() {
+      alert("Message sent! Thanks for helping make the tracker better. ✨");
+      closeContactModal();
+      // Reset form
+      document.getElementById('contactEmail').value = '';
+      document.getElementById('contactDescription').value = '';
+      btn.innerText = "Send Message ✨";
+      btn.disabled = false;
+    })
+    .sendContactEmail(email, desc);
+}
+
+// Close modal if user clicks outside of it
+window.onclick = function(event) {
+  const modal = document.getElementById('contactModal');
+  if (event.target == modal) {
+    closeContactModal();
+  }
+}
     </script>
