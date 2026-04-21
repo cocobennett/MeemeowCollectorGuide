@@ -208,4 +208,82 @@ window.onclick = function(event) {
     closeContactModal();
   }
 }
+
+function handleLogout() {
+  const btn = event.target;
+  btn.innerText = "Signing out...";
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(url) {
+      // Overwrite the page content with a simple, clean logout confirmation
+      document.body.innerHTML = `
+        <div style="
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          justify-content: center; 
+          height: 80vh; 
+          font-family: 'Comic Sans MS', cursive; 
+          background-color: #FFC0CB; 
+          text-align: center;
+          padding: 20px;">
+          <div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid #B0E0E6;">
+            <h2 style="color: #555;">Logged out successfully! 🐾</h2>
+            <p>Your session has been cleared.</p>
+            <a href="${url}" target="_top" style="
+              display: inline-block;
+              margin-top: 20px;
+              padding: 12px 25px;
+              background-color: #B0E0E6;
+              color: white;
+              text-decoration: none;
+              border-radius: 25px;
+              font-weight: bold;
+              box-shadow: 0 4px #88d0d9;">
+              Return to Tracker ✨
+            </a>
+          </div>
+        </div>`;
+    })
+    .withFailureHandler(function(err) {
+      alert("Logout failed: " + err);
+      btn.innerText = "Sign Out 🐾";
+      btn.disabled = false;
+    })
+    .logout();
+}
+
+function startLogin(url) {
+  // We overwrite the body to ensure the user provides a fresh "gesture"
+  // and the browser clearly sees it as a top-level navigation request.
+  document.body.innerHTML = `
+    <div style="
+      display: flex; 
+      flex-direction: column; 
+      align-items: center; 
+      justify-content: center; 
+      height: 80vh; 
+      font-family: 'Comic Sans MS', cursive; 
+      background-color: #FFC0CB; 
+      text-align: center;
+      padding: 20px;">
+      <div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid #B0E0E6;">
+        <h2 style="color: #555;">Ready to log in? 🐾</h2>
+        <p>This will open Google's secure login screen.</p>
+        <a href="${url}" target="_top" style="
+          display: inline-block;
+          margin-top: 20px;
+          padding: 12px 25px;
+          background-color: #B0E0E6;
+          color: white;
+          text-decoration: none;
+          border-radius: 25px;
+          font-weight: bold;
+          box-shadow: 0 4px #88d0d9;">
+          Continue to Google ✨
+        </a>
+      </div>
+    </div>`;
+}
     </script>

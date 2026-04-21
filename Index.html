@@ -11,13 +11,18 @@
     <h1>✨  MeeMeow Collector's Guide ✨</h1>
     <? } ?>
     <? if (isLoggedIn) { ?>
-    <h1>✨ <?= userName ?>'s MeeMeow Collector's Guide ✨</h1>
-    <? } ?>
+  <h1>✨ <?= userName ?>'s MeeMeow Collector's Guide ✨</h1>
+  <div style="text-align: center;">
+    <button onclick="handleLogout()" class="contact-btn" style="background-color: #ff69b4;">
+  Sign Out 🐾
+</button>
+  </div>
+<? } ?>
     
 
     <? if (!isLoggedIn) { ?>
   <div class="login-banner">
-    🐾 Want to track your collection? <a href="https://accounts.google.com/AccountChooser?continue=<?= loginUrl ?>" target="_blank">Login with Google</a> to save your MeeMeows!
+    🐾 Want to track your collection? <a href="<?= loginUrl ?>" target="_top">Login with Google</a> to save your MeeMeows!
   </div>
 <? } ?>
 
