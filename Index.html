@@ -1,96 +1,106 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <base target="_top">
-    <?!= include('Stylesheet'); ?>
-    <meta charset="UTF-8">
-    <meta name="referrer" content="no-referrer-when-downgrade">
-  </head>
-  <body>
-    <div class="auth-container">
-  <? if (isLoggedIn) { ?>
+
+<head>
+  <base target="_top">
+  <?!= include('Stylesheet'); ?>
+  <meta charset="UTF-8">
+  <meta name="referrer" content="no-referrer-when-downgrade">
+</head>
+
+<body>
+  <div class="auth-container">
+    <? if (isLoggedIn) { ?>
     <div class="user-pill">
-      <span>🐾 <?= userName ?></span>
+      <span>🐾
+        <?= userName ?>
+      </span>
       <button onclick="handleLogout()" class="logout-btn">Sign Out 🐾</button>
     </div>
-  <? } else { ?>
+    <? } else { ?>
     <a href="<?= loginUrl ?>" target="_top" class="login-link">Login 🐾</a>
-  <? } ?>
-</div>
-
-    <? if (!isLoggedIn) { ?>
-    <h1>✨  MeeMeow Collector's Guide ✨</h1>
     <? } ?>
-    <? if (isLoggedIn) { ?>
-  <h1>✨ <?= userName ?>'s MeeMeow Collector's Guide ✨</h1>
-<? } ?>
-    
-
-    <? if (!isLoggedIn) { ?>
-  <div class="login-banner">
-    🐾 Want to track your collection? <a href="<?= loginUrl ?>" target="_top">Login with Google</a> to save your MeeMeows!
   </div>
-<? } ?>
 
-    <div class="controls">
-  <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Search cats... 🐾">
-  
-  <select id="seriesFilter" onchange="applyFilters()">
-    <option value="all">All Series ✨</option>
+  <? if (!isLoggedIn) { ?>
+  <h1>✨ MeeMeow Collector's Guide ✨</h1>
+  <? } ?>
+  <? if (isLoggedIn) { ?>
+  <h1>✨
+    <?= userName ?>'s MeeMeow Collector's Guide ✨
+  </h1>
+  <? } ?>
+
+
+  <? if (!isLoggedIn) { ?>
+  <div class="login-banner">
+    🐾 Want to track your collection? <a href="<?= loginUrl ?>" target="_top">Login with Google</a> to save your
+    MeeMeows!
+  </div>
+  <? } ?>
+
+  <div class="controls">
+    <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Search cats... 🐾">
+
+    <select id="seriesFilter" onchange="applyFilters()">
+      <option value="all">All Series ✨</option>
     </select>
 
     <select id="formFilter" onchange="applyFilters()">
-  <option value="all">All Forms ✨</option>
-</select>
+      <option value="all">All Forms ✨</option>
+    </select>
 
- <button onclick="openContactModal()" class="contact-btn">Contact Me 💌</button>
-</div>
+    <button onclick="openContactModal()" class="contact-btn">Contact Me 💌</button>
+  </div>
 
-<div id="loading-container">
-      <div>Loading cats...</div>
-      <div class="coco-star"></div>
-    </div>
+  <div id="loading-container">
+    <div>Loading cats...</div>
+    <div class="coco-star"></div>
+  </div>
 
-    <div id="list" style="display: none;"></div>
+  <div id="list" style="display: none;"></div>
 
-    <footer class="coco-footer">
-      <div class="footer-content">
-        <p>🐾 <b>MeeMeow Links</b> 🐾</p>
-        <div class="footer-links">
-          <a href="https://www.aphmeow.com/meemeows" target="_blank">Official Aphmau Website</a>
-          <a href="https://www.youtube.com/@CocosCreations1130" target="_blank">Watch the checklist maker's Youtube Channel, Coco's Creations!</a>
-          <a href="https://www.youtube.com/@Aphmau" target="_blank">Aphmau's Youtube Channel</a>
-        </div>
-        <p class="footer-credit">Created with ✨ for Coco's Creations</p>
+  <footer class="coco-footer">
+    <div class="footer-content">
+      <p>🐾 <b>MeeMeow Links</b> 🐾</p>
+      <div class="footer-links">
+        <a href="https://www.aphmeow.com/meemeows" target="_blank">Official Aphmau Website</a>
+        <a href="https://www.youtube.com/@CocosCreations1130" target="_blank">Watch the checklist maker's Youtube
+          Channel, Coco's Creations!</a>
+        <a href="https://www.youtube.com/@Aphmau" target="_blank">Aphmau's Youtube Channel</a>
       </div>
-    </footer>
+      <p class="footer-credit">Created with ✨ for Coco's Creations</p>
+    </div>
+  </footer>
 
-<div id="contactModal" class="modal">
-  <div class="modal-content">
-    <span class="close-btn" onclick="closeContactModal()">&times;</span>
-    <h3>Contact Coco 🐾</h3>
-    <p style="font-size: 0.9em; color: #666;">
-      I'm so glad you are using this checklist! Feel free to send me an email if I'm missing a cat or you want to suggest a feature!
-    </p>
-    
-    <div class="contact-form">
-      <label>Your Email:</label>
-      <input type="email" id="contactEmail" placeholder="your@email.com">
-      
-      <label>What's on your mind?</label>
-      <textarea id="contactDescription" rows="4" placeholder="Missing cat? New feature idea?"></textarea>
-      
-      <button onclick="submitContactForm()" id="submitBtn">Send Message ✨</button>
+  <div id="contactModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeContactModal()">&times;</span>
+      <h3>Contact Coco 🐾</h3>
+      <p style="font-size: 0.9em; color: #666;">
+        I'm so glad you are using this checklist! Feel free to send me an email if I'm missing a cat or you want to
+        suggest a feature!
+      </p>
+
+      <div class="contact-form">
+        <label>Your Email:</label>
+        <input type="email" id="contactEmail" placeholder="your@email.com">
+
+        <label>What's on your mind?</label>
+        <textarea id="contactDescription" rows="4" placeholder="Missing cat? New feature idea?"></textarea>
+
+        <button onclick="submitContactForm()" id="submitBtn">Send Message ✨</button>
+      </div>
     </div>
   </div>
-</div>
-<script>
-  // We use quotes around the template tag to ensure it's treated as a string, 
-  // then compare it to the string 'true'
-  const canTrack = "<?= isLoggedIn ?>" === "true";
-  console.log("Is User Logged In?", canTrack); // This will help us debug!
-</script>
+  <script>
+    // We use quotes around the template tag to ensure it's treated as a string, 
+    // then compare it to the string 'true'
+    const canTrack = "<?= isLoggedIn ?>" === "true";
+    console.log("Is User Logged In?", canTrack); // This will help us debug!
+  </script>
 
-    <?!= include('JavaScript'); ?>
-  </body>
+  <?!= include('JavaScript'); ?>
+</body>
+
 </html>
