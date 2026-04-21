@@ -7,16 +7,22 @@
     <meta name="referrer" content="no-referrer-when-downgrade">
   </head>
   <body>
+    <div class="auth-container">
+  <? if (isLoggedIn) { ?>
+    <div class="user-pill">
+      <span>🐾 <?= userName ?></span>
+      <button onclick="handleLogout()" class="logout-btn">Sign Out 🐾</button>
+    </div>
+  <? } else { ?>
+    <a href="<?= loginUrl ?>" target="_top" class="login-link">Login 🐾</a>
+  <? } ?>
+</div>
+
     <? if (!isLoggedIn) { ?>
     <h1>✨  MeeMeow Collector's Guide ✨</h1>
     <? } ?>
     <? if (isLoggedIn) { ?>
   <h1>✨ <?= userName ?>'s MeeMeow Collector's Guide ✨</h1>
-  <div style="text-align: center;">
-    <button onclick="handleLogout()" class="contact-btn" style="background-color: #ff69b4;">
-  Sign Out 🐾
-</button>
-  </div>
 <? } ?>
     
 

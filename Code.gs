@@ -56,24 +56,36 @@ function authCallback(request) {
   const authorized = service.handleCallback(request);
   
   if (authorized) {
-    // 1. Retrieve the URL we saved in doGet
-    let url = PropertiesService.getUserProperties().getProperty('last_tracker_url');
-    
-    // 2. Safety Fallback: If for some reason the property is gone, guess the URL
-    if (!url) {
-      url = ScriptApp.getService().getUrl().replace('/usercallback', '/exec');
-    }
+    const url = PropertiesService.getUserProperties().getProperty('last_tracker_url') || 
+                ScriptApp.getService().getUrl().replace('/usercallback', '/exec');
     
     return HtmlService.createHtmlOutput(`
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 80vh; font-family: 'Comic Sans MS', cursive; background-color: #FFC0CB; text-align: center; padding: 20px;">
-        <div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid #B0E0E6;">
-          <h2 style="color: #555;">Yay! You're logged in! 🐾</h2>
-          <p>Click below to return to your tracker.</p>
-          <a href="${url}" target="_top" style="display: inline-block; margin-top: 20px; padding: 12px 25px; background-color: #B0E0E6; color: white; text-decoration: none; border-radius: 25px; font-weight: bold; box-shadow: 0 4px #88d0d9;">
-            Go to My Tracker ✨
-          </a>
+    <div style="
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          justify-content: center; 
+          height: 80vh; 
+          font-family: 'Comic Sans MS', cursive; 
+          background-color: #FFC0CB; 
+          text-align: center;
+          padding: 20px;">
+          <div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid #B0E0E6;">
+            <h2 style="color: #555;">Yay! You're logged in! 🐾</h2>
+            <a href="${url}" target="_top" style="
+              display: inline-block;
+              margin-top: 20px;
+              padding: 12px 25px;
+              background-color: #B0E0E6;
+              color: white;
+              text-decoration: none;
+              border-radius: 25px;
+              font-weight: bold;
+              box-shadow: 0 4px #88d0d9;">
+              Go to My Tracker ✨
+            </a>
+          </div>
         </div>
-      </div>
     `);
   } else {
     return HtmlService.createHtmlOutput('Access Denied. 😿');

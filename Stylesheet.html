@@ -1,7 +1,7 @@
 <style>
   body { background-color: #FFC0CB; font-family: 'Comic Sans MS', cursive; }
   .card { border: 2px solid #B0E0E6; border-radius: 15px; margin: 10px; padding: 10px; background: white; display: inline-block; width: 200px; }
-  h1 { color: #fff; text-shadow: 2px 2px #B0E0E6; text-align: center; }
+  h1 { color: #fff; text-shadow: 2px 2px #B0E0E6; text-align: center; padding-top: 40px; /* Gives space for the button above the title on mobile */ }
   .meemeow-img {
     width: 100%;
     min-height: 150px;
@@ -361,5 +361,83 @@ small {
 
 .login-banner a:hover {
   text-decoration: underline;
+}
+.auth-container {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  z-index: 1000; /* Ensures it stays above other elements */
+}
+
+.user-pill {
+  background-color: white;
+  padding: 5px 15px;
+  border-radius: 25px;
+  border: 2px solid #B0E0E6;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.user-pill span {
+  font-weight: bold;
+  color: #555;
+  font-size: 14px;
+}
+
+.logout-btn {
+  background-color: #ff69b4;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: bold;
+  transition: transform 0.2s;
+}
+
+.logout-btn:hover {
+  transform: scale(1.05);
+  background-color: #ff1493;
+}
+
+.login-link {
+  background-color: #B0E0E6;
+  color: white;
+  padding: 8px 15px;
+  border-radius: 20px;
+  text-decoration: none;
+  font-weight: bold;
+  box-shadow: 0 3px #88d0d9;
+}
+/* --- Mobile Magic --- */
+@media screen and (max-width: 600px) {
+  #list {
+    padding: 5px; /* Less padding on the sides for more screen space */
+  }
+
+  .series-grid {
+    gap: 10px; /* Tighter gap between cards */
+  }
+
+  .card {
+    /* Override desktop limits: make card 100% width minus margins */
+    flex: 1 1 100%; 
+    max-width: 100%;
+    min-width: 0; /* Allows card to shrink if screen is tiny */
+    margin: 5px 0; /* Vertical spacing only */
+  }
+
+  .auth-container {
+    /* Optional: Move the logout button slightly on mobile to avoid crowding */
+    top: 10px;
+    right: 10px;
+  }
+  
+  .user-pill span {
+    display: none; /* Hides name on tiny screens to save space, keeping just the icon/button */
+  }
 }
 </style>
