@@ -174,6 +174,19 @@ function handleAuthSubmit(event) {
     showCats([allMeeMeows[0], ...filtered]);
   }
 
+// Helper to convert Rarity text into your custom icons 🐾
+  function getRarityIcon(rarityText) {
+    if (!rarityText) return "";
+    const rarity = rarityText.toLowerCase().trim();
+    
+    if (rarity.includes("common") && !rarity.includes("uncommon")) return "🐾";
+    if (rarity.includes("uncommon")) return "❤️";
+    if (rarity.includes("ultra rare")) return "✨"; // Check for Ultra Rare first
+    if (rarity.includes("rare")) return "⭐";
+    
+    return ""; // Default if empty
+  }
+
   function showCats(data) {
     const loading = document.getElementById('loading-container');
     if (loading) loading.style.display = 'none';
@@ -181,16 +194,25 @@ function handleAuthSubmit(event) {
     if (!container) return;
     container.style.display = 'block';
     container.innerHTML = '';
+
     let sorted = data.slice(1).sort((a, b) => a[1] < b[1] ? -1 : 1);
     let curSeries = ""; let curGrid = null;
+
     sorted.forEach((row, i) => {
       if (row[1] !== curSeries) {
         curSeries = row[1];
         container.innerHTML += `<h2 class="series-header">${curSeries}</h2>`;
         curGrid = document.createElement('div'); curGrid.className = 'series-grid'; container.appendChild(curGrid);
       }
+
+      // --- NEW: Rarity Icon Logic ---
+      // We assume Rarity is in row[4] based on your getMeeMeows mapping
+      const rarityValue = row[4] || "Common"; 
+      const rarityIcon = getRarityIcon(rarityValue);
+
       const forms = (row[3] || "").split(',').map(f => f.trim());
       let tracking = currentUser ? "" : `<p style="font-size:0.8em;color:#888;">🐾 Login to track</p>`;
+      
       if(currentUser) {
         forms.forEach((f, fi) => {
           const owned = (row[6] || []).includes(f);
@@ -198,7 +220,17 @@ function handleAuthSubmit(event) {
           tracking += `<button id="${uid}" class="form-btn ${owned?'owned-btn':''}" onclick="markOwned('${row[0].replace(/'/g,"\\'")}', '${f}', '${uid}')" ${owned?'disabled':''}>${f} ${owned?'🐾':'+'}</button>`;
         });
       }
-      curGrid.innerHTML += `<div class="card"><img src="${row[5]}" class="meemeow-img"><p><b>${row[0]}</b></p><div class="forms-container">${tracking}</div></div>`;
+
+      curGrid.innerHTML += `
+        <div class="card">
+          <div class="rarity-badge">
+            ${rarityIcon}
+            <span class="rarity-tooltip">${rarityValue}</span>
+          </div>
+          <img src="${row[5]}" class="meemeow-img">
+          <p><b>${row[0]}</b></p>
+          <div class="forms-container">${tracking}</div>
+        </div>`;
     });
   }
 
