@@ -1,55 +1,24 @@
 <!DOCTYPE html>
 <html>
-
 <head>
   <base target="_top">
   <?!= include('Stylesheet'); ?>
   <meta charset="UTF-8">
   <meta name="referrer" content="no-referrer-when-downgrade">
 </head>
-
 <body>
-  <div class="auth-container">
-    <? if (isLoggedIn) { ?>
-    <div class="user-pill">
-      <span>🐾
-        <?= userName ?>
-      </span>
-      <button onclick="handleLogout()" class="logout-btn">Sign Out 🐾</button>
-    </div>
-    <? } else { ?>
-    <a href="<?= loginUrl ?>" target="_top" class="login-link">Login 🐾</a>
-    <? } ?>
+  <div class="auth-container" id="authUI"></div>
+
+  <h1 id="mainTitle">✨ MeeMeow Collector's Guide ✨</h1>
+
+  <div id="loginBanner" class="login-banner" style="display:none;">
+    🐾 Want to track your collection? <a href="#" onclick="toggleAuthModal(true)">Login or Register</a> to save your MeeMeows!
   </div>
-
-  <? if (!isLoggedIn) { ?>
-  <h1>✨ MeeMeow Collector's Guide ✨</h1>
-  <? } ?>
-  <? if (isLoggedIn) { ?>
-  <h1>✨
-    <?= userName ?>'s MeeMeow Collector's Guide ✨
-  </h1>
-  <? } ?>
-
-
-  <? if (!isLoggedIn) { ?>
-  <div class="login-banner">
-    🐾 Want to track your collection? <a href="<?= loginUrl ?>" target="_top">Login with Google</a> to save your
-    MeeMeows!
-  </div>
-  <? } ?>
 
   <div class="controls">
     <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Search cats... 🐾">
-
-    <select id="seriesFilter" onchange="applyFilters()">
-      <option value="all">All Series ✨</option>
-    </select>
-
-    <select id="formFilter" onchange="applyFilters()">
-      <option value="all">All Forms ✨</option>
-    </select>
-
+    <select id="seriesFilter" onchange="applyFilters()"><option value="all">All Series ✨</option></select>
+    <select id="formFilter" onchange="applyFilters()"><option value="all">All Forms ✨</option></select>
     <button onclick="openContactModal()" class="contact-btn">Contact Me 💌</button>
   </div>
 
@@ -60,14 +29,27 @@
 
   <div id="list" style="display: none;"></div>
 
+  <div id="authModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="toggleAuthModal(false)">&times;</span>
+      <h3 id="authTitle">Login to Tracker 🐾</h3>
+      <div class="contact-form">
+        <input type="email" id="authEmail" placeholder="Email">
+        <input type="password" id="authPassword" placeholder="Password">
+        <button onclick="handleAuthSubmit()" id="authSubmitBtn">Login ✨</button>
+        <p style="font-size: 0.8em; margin-top:10px;">
+          <a href="#" id="authToggle" onclick="switchAuthMode()">Need an account? Register here!</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
   <footer class="coco-footer">
     <div class="footer-content">
       <p>🐾 <b>MeeMeow Links</b> 🐾</p>
       <div class="footer-links">
         <a href="https://www.aphmeow.com/meemeows" target="_blank">Official Aphmau Website</a>
-        <a href="https://www.youtube.com/@CocosCreations1130" target="_blank">Watch the checklist maker's Youtube
-          Channel, Coco's Creations!</a>
-        <a href="https://www.youtube.com/@Aphmau" target="_blank">Aphmau's Youtube Channel</a>
+        <a href="https://www.youtube.com/@CocosCreations1130" target="_blank">Watch Coco's Creations!</a>
       </div>
       <p class="footer-credit">Created with ✨ for Coco's Creations</p>
     </div>
@@ -77,30 +59,14 @@
     <div class="modal-content">
       <span class="close-btn" onclick="closeContactModal()">&times;</span>
       <h3>Contact Coco 🐾</h3>
-      <p style="font-size: 0.9em; color: #666;">
-        I'm so glad you are using this checklist! Feel free to send me an email if I'm missing a cat or you want to
-        suggest a feature!
-      </p>
-
       <div class="contact-form">
-        <label>Your Email:</label>
         <input type="email" id="contactEmail" placeholder="your@email.com">
-
-        <label>What's on your mind?</label>
-        <textarea id="contactDescription" rows="4" placeholder="Missing cat? New feature idea?"></textarea>
-
+        <textarea id="contactDescription" rows="4"></textarea>
         <button onclick="submitContactForm()" id="submitBtn">Send Message ✨</button>
       </div>
     </div>
   </div>
-  <script>
-    // We use quotes around the template tag to ensure it's treated as a string, 
-    // then compare it to the string 'true'
-    const canTrack = "<?= isLoggedIn ?>" === "true";
-    console.log("Is User Logged In?", canTrack); // This will help us debug!
-  </script>
 
   <?!= include('JavaScript'); ?>
 </body>
-
 </html>

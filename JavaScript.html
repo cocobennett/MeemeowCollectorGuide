@@ -1,288 +1,305 @@
 <script>
-  let allMeeMeows = []; // We'll store the data here so we can filter it easily
+  let allMeeMeows = [];
+  let isRegisterMode = false;
+  let currentUser = localStorage.getItem('meemeow_user') || null;
+  let currentUserName = localStorage.getItem('meemeow_name') || "Guest";
 
-  google.script.run.withSuccessHandler(initializeStore).getMeeMeows();
+  // --- Start Up Logic ---
+  window.addEventListener('DOMContentLoaded', () => {
+    updateUI();
+    google.script.run.withSuccessHandler(initializeStore).getMeeMeows(currentUser);
+  });
 
   function initializeStore(data) {
     allMeeMeows = data;
-    populateDropdowns(data); // Renamed to handle both
+    populateDropdowns(data);
     showCats(data);
   }
 
-  function populateDropdowns(data) {
-    const seriesDropdown = document.getElementById('seriesFilter');
-    const formDropdown = document.getElementById('formFilter');
+  function updateUI() {
+    const authUI = document.getElementById('authUI');
+    const title = document.getElementById('mainTitle');
+    const banner = document.getElementById('loginBanner');
 
-    // 1. Get unique Series
-    const seriesList = [...new Set(data.slice(1).map(row => row[1]))].sort();
-
-    // 2. Get unique individual Forms
-    // We split by comma, trim whitespace, and flatten the array
-    const allFormsRaw = data.slice(1).map(row => row[3] ? row[3].split(',') : []);
-    const flatForms = allFormsRaw.flat().map(f => f.trim()).filter(f => f !== "");
-    const uniqueForms = [...new Set(flatForms)].sort();
-
-    // Populate Series
-    seriesList.forEach(series => {
-      if (series) {
-        let opt = document.createElement('option');
-        opt.value = series;
-        opt.innerHTML = series;
-        seriesDropdown.appendChild(opt);
-      }
-    });
-
-    // Populate Forms
-    uniqueForms.forEach(form => {
-      let opt = document.createElement('option');
-      opt.value = form;
-      opt.innerHTML = form;
-      formDropdown.appendChild(opt);
-    });
-  }
-
-  function applyFilters() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const seriesValue = document.getElementById('seriesFilter').value;
-    const formValue = document.getElementById('formFilter').value;
-
-    const filteredData = allMeeMeows.filter((row, index) => {
-      if (index === 0) return false;
-
-      // Clean quotes for comparison, just like we did for the buttons
-      const name = row[0].toLowerCase();
-      const catForms = row[3] ? row[3].split(',').map(f => f.trim()) : [];
-
-      const matchesSearch = name.includes(searchTerm);
-      const matchesSeries = (seriesValue === "all" || row[1] === seriesValue);
-      const matchesForm = (formValue === "all" || catForms.includes(formValue));
-
-      return matchesSearch && matchesSeries && matchesForm;
-    });
-
-    showCats([allMeeMeows[0], ...filteredData]);
-  }
-
-
-  // Updated to handle the specific form and button ID
-  function markOwned(name, form, btnId) {
-    const btn = document.getElementById(btnId);
-    if (!btn) return; // Safety check
-
-    btn.innerText = "Saving...";
-    btn.disabled = true;
-
-    google.script.run
-      .withSuccessHandler(function () {
-        btn.innerText = form + " 🐾";
-        btn.classList.add('owned-btn');
-      })
-      .withFailureHandler(function (err) {
-        alert("Error saving: " + err.message);
-        btn.innerText = "Retry?";
-        btn.disabled = false;
-      })
-      .toggleOwned(name, form);
-  }
-
-  function showCats(data) {
-    document.getElementById('loading-container').style.display = 'none';
-    const container = document.getElementById('list');
-    container.style.display = 'block';
-    container.innerHTML = '';
-
-    let sortedData = data.slice(1).sort((a, b) => (a[1] < b[1] ? -1 : 1));
-    let currentSeries = "";
-    let currentGrid = null;
-
-    sortedData.forEach((row, i) => {
-      const name = row[0];
-      const series = row[1];
-      const formsString = row[3] || "Mystery Form";
-      const imgUrl = row[5];
-      const ownedForms = row[6] || [];
-
-      if (series !== currentSeries) {
-        currentSeries = series;
-        container.innerHTML += `<h2 class="series-header">${series}</h2>`;
-        currentGrid = document.createElement('div');
-        currentGrid.className = 'series-grid';
-        container.appendChild(currentGrid);
-      }
-
-      const formsArray = formsString.split(',').map(f => f.trim());
-      let trackingSection = "";
-
-      // ONLY build buttons if canTrack is true
-      if (canTrack) {
-        let formButtonsHtml = "";
-        formsArray.forEach((form, formIndex) => {
-          const isOwned = ownedForms.includes(form);
-          const uniqueId = `btn-${i}-${formIndex}`;
-          const cleanName = name.replace(/['"]/g, "");
-          const cleanForm = form.replace(/['"]/g, "");
-
-          formButtonsHtml += `
-          <button id="${uniqueId}" 
-                  class="form-btn ${isOwned ? 'owned-btn' : ''}" 
-                  onclick="markOwned('${cleanName}', '${cleanForm}', '${uniqueId}')" 
-                  ${isOwned ? 'disabled' : ''}>
-            ${form} ${isOwned ? '🐾' : '+'}
-          </button>`;
-        });
-        trackingSection = formButtonsHtml;
+    // Safety check: only update if the elements exist
+    if (authUI) {
+      if (currentUser) {
+        authUI.innerHTML = `
+          <div class="user-pill">
+            <span>🐾 ${currentUserName}</span>
+            <button onclick="handleLogout()" class="logout-btn">Sign Out 🐾</button>
+          </div>`;
       } else {
-        // This is all Guests will see
-        trackingSection = `<p style="font-size: 0.8em; color: #888; margin: 10px 0;">🐾 Login to track</p>`;
-      }
-
-      currentGrid.innerHTML += `
-      <div class="card" id="card-${i}">
-        <img src="${imgUrl}" class="meemeow-img" alt="${name}">
-        <p><b>${name}</b></p>
-        <div class="forms-container">
-          ${trackingSection}
-        </div>
-      </div>`;
-    });
-  }
-
-  function filterCats() {
-    // 1. Get the text from the search bar
-    const input = document.getElementById('searchInput');
-    const filter = input.value.toLowerCase();
-
-    // 2. Get all the cat cards
-    const cards = document.getElementsByClassName('card');
-
-    // 3. Loop through them and hide/show based on the name
-    for (let i = 0; i < cards.length; i++) {
-      const name = cards[i].getElementsByTagName('b')[0].innerText.toLowerCase();
-
-      if (name.indexOf(filter) > -1) {
-        cards[i].style.display = "inline-block"; // Show
-      } else {
-        cards[i].style.display = "none"; // Hide
+        authUI.innerHTML = `<button onclick="toggleAuthModal(true)" class="login-link">Login 🐾</button>`;
       }
     }
+
+    if (title && currentUser) title.innerText = `✨ ${currentUserName}'s MeeMeow Collector's Guide ✨`;
+    if (banner) banner.style.display = currentUser ? 'none' : 'block';
   }
 
-  function openContactModal() {
-    document.getElementById('contactModal').style.display = 'block';
+  function toggleAuthModal(show) { document.getElementById('authModal').style.display = show ? 'block' : 'none'; }
+
+  function switchAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    document.getElementById('authTitle').innerText = isRegisterMode ? "Create Account 🐾" : "Login to Tracker 🐾";
+    document.getElementById('authSubmitBtn').innerText = isRegisterMode ? "Register ✨" : "Login ✨";
+    document.getElementById('authToggle').innerText = isRegisterMode ? "Have an account? Login" : "Need an account? Register!";
   }
 
-  function closeContactModal() {
-    document.getElementById('contactModal').style.display = 'none';
-  }
+  function handleAuthSubmit() {
+    const email = document.getElementById('authEmail').value;
+    const pwd = document.getElementById('authPassword').value;
+    const btn = document.getElementById('authSubmitBtn');
+    if (!email || !pwd) return alert("Please fill in both fields! 🐾");
 
-  function submitContactForm() {
-    const email = document.getElementById('contactEmail').value;
-    const desc = document.getElementById('contactDescription').value;
-    const btn = document.getElementById('submitBtn');
-
-    if (!email || !desc) {
-      alert("Please fill out both fields! 🐾");
-      return;
-    }
-
-    btn.innerText = "Sending...";
     btn.disabled = true;
+    btn.innerText = "Processing...";
 
-    google.script.run
-      .withSuccessHandler(function () {
-        alert("Message sent! Thanks for helping make the tracker better. ✨");
-        closeContactModal();
-        // Reset form
-        document.getElementById('contactEmail').value = '';
-        document.getElementById('contactDescription').value = '';
-        btn.innerText = "Send Message ✨";
-        btn.disabled = false;
-      })
-      .sendContactEmail(email, desc);
-  }
-
-  // Close modal if user clicks outside of it
-  window.onclick = function (event) {
-    const modal = document.getElementById('contactModal');
-    if (event.target == modal) {
-      closeContactModal();
+    if (isRegisterMode) {
+      google.script.run
+        .withSuccessHandler(msg => { alert(msg); switchAuthMode(); btn.disabled = false; btn.innerText = "Login ✨"; })
+        .withFailureHandler(err => { alert(err); btn.disabled = false; btn.innerText = "Register ✨"; })
+        .registerUser(email, pwd);
+    } else {
+      google.script.run
+        .withSuccessHandler(user => {
+          localStorage.setItem('meemeow_user', user.email);
+          localStorage.setItem('meemeow_name', user.name);
+          location.reload();
+        })
+        .withFailureHandler(err => { alert(err); btn.disabled = false; btn.innerText = "Login ✨"; })
+        .loginUser(email, pwd);
     }
   }
 
   function handleLogout() {
-    const btn = event.target;
-    btn.innerText = "Signing out...";
+    localStorage.removeItem('meemeow_user');
+    localStorage.removeItem('meemeow_name');
+    location.reload();
+  }
+
+  function markOwned(name, form, btnId) {
+    if (!currentUser) return alert("Please login first! 🐾");
+    const btn = document.getElementById(btnId);
+    btn.innerText = "Saving...";
     btn.disabled = true;
 
     google.script.run
-      .withSuccessHandler(function (url) {
-        // Overwrite the page content with a simple, clean logout confirmation
-        document.body.innerHTML = `
-        <div style="
-          display: flex; 
-          flex-direction: column; 
-          align-items: center; 
-          justify-content: center; 
-          height: 80vh; 
-          font-family: 'Comic Sans MS', cursive; 
-          background-color: #FFC0CB; 
-          text-align: center;
-          padding: 20px;">
-          <div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid #B0E0E6;">
-            <h2 style="color: #555;">Logged out successfully! 🐾</h2>
-            <a href="${url}" target="_top" style="
-              display: inline-block;
-              margin-top: 20px;
-              padding: 12px 25px;
-              background-color: #B0E0E6;
-              color: white;
-              text-decoration: none;
-              border-radius: 25px;
-              font-weight: bold;
-              box-shadow: 0 4px #88d0d9;">
-              Return to Tracker ✨
-            </a>
-          </div>
-        </div>`;
-      })
-      .withFailureHandler(function (err) {
-        alert("Logout failed: " + err);
-        btn.innerText = "Sign Out 🐾";
-        btn.disabled = false;
-      })
-      .logout();
+      .withSuccessHandler(() => { btn.innerText = form + " 🐾"; btn.classList.add('owned-btn'); })
+      .withFailureHandler(err => { alert(err); btn.disabled = false; })
+      .toggleOwned(currentUser, name, form);
   }
 
-  function startLogin(url) {
-    // We overwrite the body to ensure the user provides a fresh "gesture"
-    // and the browser clearly sees it as a top-level navigation request.
-    document.body.innerHTML = `
-    <div style="
-      display: flex; 
-      flex-direction: column; 
-      align-items: center; 
-      justify-content: center; 
-      height: 80vh; 
-      font-family: 'Comic Sans MS', cursive; 
-      background-color: #FFC0CB; 
-      text-align: center;
-      padding: 20px;">
-      <div style="background: white; padding: 30px; border-radius: 20px; border: 4px solid #B0E0E6;">
-        <h2 style="color: #556;">Ready to log in? 🐾</h2>
-        <p>This will open Google's secure login screen.</p>
-        <a href="${url}" target="_top" style="
-          display: inline-block;
-          margin-top: 20px;
-          padding: 12px 25px;
-          background-color: #B0E0E6;
-          color: white;
-          text-decoration: none;
-          border-radius: 25px;
-          font-weight: bold;
-          box-shadow: 0 4px #88d0d9;">
-          Continue to Google ✨
-        </a>
-      </div>
-    </div>`;
+  function populateDropdowns(data) {
+    const seriesDD = document.getElementById('seriesFilter');
+    const formDD = document.getElementById('formFilter');
+    const series = [...new Set(data.slice(1).map(r => r[1]))].sort();
+    const forms = [...new Set(data.slice(1).map(r => r[3] ? r[3].split(',') : []).flat().map(f => f.trim()))].sort();
+    series.forEach(s => { if(s){ let o = document.createElement('option'); o.value=o.innerHTML=s; seriesDD.appendChild(o); }});
+    forms.forEach(f => { if(f){ let o = document.createElement('option'); o.value=o.innerHTML=f; formDD.appendChild(o); }});
+  }
+
+  function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const sVal = document.getElementById('seriesFilter').value;
+    const fVal = document.getElementById('formFilter').value;
+    const filtered = allMeeMeows.filter((r, i) => {
+      if (i === 0) return false;
+      const cats = r[3] ? r[3].split(',').map(f => f.trim()) : [];
+      return r[0].toLowerCase().includes(search) && (sVal === "all" || r[1] === sVal) && (fVal === "all" || cats.includes(fVal));
+    });
+    showCats([allMeeMeows[0], ...filtered]);
+  }
+
+  function showCats(data) {
+    const loading = document.getElementById('loading-container');
+    if (loading) loading.style.display = 'none';
+    const container = document.getElementById('list');
+    if (!container) return;
+    container.style.display = 'block';
+    container.innerHTML = '';
+
+    let sorted = data.slice(1).sort((a, b) => a[1] < b[1] ? -1 : 1);
+    let curSeries = ""; let curGrid = null;
+
+    sorted.forEach((row, i) => {
+      if (row[1] !== curSeries) {
+        curSeries = row[1];
+        container.innerHTML += `<h2 class="series-header">${curSeries}</h2>`;
+        curGrid = document.createElement('div'); curGrid.className = 'series-grid'; container.appendChild(curGrid);
+      }
+      const forms = (row[3] || "").split(',').map(f => f.trim());
+      let tracking = currentUser ? "" : `<p style="font-size:0.8em;color:#888;">🐾 Login to track</p>`;
+      if(currentUser) {
+        forms.forEach((f, fi) => {
+          const owned = (row[6] || []).includes(f);
+          const uid = `btn-${i}-${fi}`;
+          tracking += `<button id="${uid}" class="form-btn ${owned?'owned-btn':''}" onclick="markOwned('${row[0].replace(/'/g,"\\'")}', '${f}', '${uid}')" ${owned?'disabled':''}>${f} ${owned?'🐾':'+'}</button>`;
+        });
+      }
+      curGrid.innerHTML += `<div class="card"><img src="${row[5]}" class="meemeow-img"><p><b>${row[0]}</b></p><div class="forms-container">${tracking}</div></div>`;
+    });
+  }
+
+  function openContactModal() { document.getElementById('contactModal').style.display = 'block'; }
+  function closeContactModal() { document.getElementById('contactModal').style.display = 'none'; }
+  function submitContactForm() {
+    const e = document.getElementById('contactEmail').value;
+    const d = document.getElementById('contactDescription').value;
+    if(!e || !d) return alert("Fill out all fields! 🐾");
+    google.script.run.withSuccessHandler(() => { alert("Message sent! ✨"); closeContactModal(); }).sendContactEmail(e, d);
+  }
+</script><script>
+  let allMeeMeows = [];
+  let isRegisterMode = false;
+  let currentUser = localStorage.getItem('meemeow_user') || null;
+  let currentUserName = localStorage.getItem('meemeow_name') || "Guest";
+
+  // --- Start Up Logic ---
+  window.addEventListener('DOMContentLoaded', () => {
+    updateUI();
+    google.script.run.withSuccessHandler(initializeStore).getMeeMeows(currentUser);
+  });
+
+  function initializeStore(data) {
+    allMeeMeows = data;
+    populateDropdowns(data);
+    showCats(data);
+  }
+
+  function updateUI() {
+    const authUI = document.getElementById('authUI');
+    const title = document.getElementById('mainTitle');
+    const banner = document.getElementById('loginBanner');
+
+    // Safety check: only update if the elements exist
+    if (authUI) {
+      if (currentUser) {
+        authUI.innerHTML = `
+          <div class="user-pill">
+            <span>🐾 ${currentUserName}</span>
+            <button onclick="handleLogout()" class="logout-btn">Sign Out 🐾</button>
+          </div>`;
+      } else {
+        authUI.innerHTML = `<button onclick="toggleAuthModal(true)" class="login-link">Login 🐾</button>`;
+      }
+    }
+
+    if (title && currentUser) title.innerText = `✨ ${currentUserName}'s MeeMeow Collector's Guide ✨`;
+    if (banner) banner.style.display = currentUser ? 'none' : 'block';
+  }
+
+  function toggleAuthModal(show) { document.getElementById('authModal').style.display = show ? 'block' : 'none'; }
+
+  function switchAuthMode() {
+    isRegisterMode = !isRegisterMode;
+    document.getElementById('authTitle').innerText = isRegisterMode ? "Create Account 🐾" : "Login to Tracker 🐾";
+    document.getElementById('authSubmitBtn').innerText = isRegisterMode ? "Register ✨" : "Login ✨";
+    document.getElementById('authToggle').innerText = isRegisterMode ? "Have an account? Login" : "Need an account? Register!";
+  }
+
+  function handleAuthSubmit() {
+    const email = document.getElementById('authEmail').value;
+    const pwd = document.getElementById('authPassword').value;
+    const btn = document.getElementById('authSubmitBtn');
+    if (!email || !pwd) return alert("Please fill in both fields! 🐾");
+
+    btn.disabled = true;
+    btn.innerText = "Processing...";
+
+    if (isRegisterMode) {
+      google.script.run
+        .withSuccessHandler(msg => { alert(msg); switchAuthMode(); btn.disabled = false; btn.innerText = "Login ✨"; })
+        .withFailureHandler(err => { alert(err); btn.disabled = false; btn.innerText = "Register ✨"; })
+        .registerUser(email, pwd);
+    } else {
+      google.script.run
+        .withSuccessHandler(user => {
+          localStorage.setItem('meemeow_user', user.email);
+          localStorage.setItem('meemeow_name', user.name);
+          location.reload();
+        })
+        .withFailureHandler(err => { alert(err); btn.disabled = false; btn.innerText = "Login ✨"; })
+        .loginUser(email, pwd);
+    }
+  }
+
+  function handleLogout() {
+    localStorage.removeItem('meemeow_user');
+    localStorage.removeItem('meemeow_name');
+    location.reload();
+  }
+
+  function markOwned(name, form, btnId) {
+    if (!currentUser) return alert("Please login first! 🐾");
+    const btn = document.getElementById(btnId);
+    btn.innerText = "Saving...";
+    btn.disabled = true;
+
+    google.script.run
+      .withSuccessHandler(() => { btn.innerText = form + " 🐾"; btn.classList.add('owned-btn'); })
+      .withFailureHandler(err => { alert(err); btn.disabled = false; })
+      .toggleOwned(currentUser, name, form);
+  }
+
+  function populateDropdowns(data) {
+    const seriesDD = document.getElementById('seriesFilter');
+    const formDD = document.getElementById('formFilter');
+    const series = [...new Set(data.slice(1).map(r => r[1]))].sort();
+    const forms = [...new Set(data.slice(1).map(r => r[3] ? r[3].split(',') : []).flat().map(f => f.trim()))].sort();
+    series.forEach(s => { if(s){ let o = document.createElement('option'); o.value=o.innerHTML=s; seriesDD.appendChild(o); }});
+    forms.forEach(f => { if(f){ let o = document.createElement('option'); o.value=o.innerHTML=f; formDD.appendChild(o); }});
+  }
+
+  function applyFilters() {
+    const search = document.getElementById('searchInput').value.toLowerCase();
+    const sVal = document.getElementById('seriesFilter').value;
+    const fVal = document.getElementById('formFilter').value;
+    const filtered = allMeeMeows.filter((r, i) => {
+      if (i === 0) return false;
+      const cats = r[3] ? r[3].split(',').map(f => f.trim()) : [];
+      return r[0].toLowerCase().includes(search) && (sVal === "all" || r[1] === sVal) && (fVal === "all" || cats.includes(fVal));
+    });
+    showCats([allMeeMeows[0], ...filtered]);
+  }
+
+  function showCats(data) {
+    const loading = document.getElementById('loading-container');
+    if (loading) loading.style.display = 'none';
+    const container = document.getElementById('list');
+    if (!container) return;
+    container.style.display = 'block';
+    container.innerHTML = '';
+
+    let sorted = data.slice(1).sort((a, b) => a[1] < b[1] ? -1 : 1);
+    let curSeries = ""; let curGrid = null;
+
+    sorted.forEach((row, i) => {
+      if (row[1] !== curSeries) {
+        curSeries = row[1];
+        container.innerHTML += `<h2 class="series-header">${curSeries}</h2>`;
+        curGrid = document.createElement('div'); curGrid.className = 'series-grid'; container.appendChild(curGrid);
+      }
+      const forms = (row[3] || "").split(',').map(f => f.trim());
+      let tracking = currentUser ? "" : `<p style="font-size:0.8em;color:#888;">🐾 Login to track</p>`;
+      if(currentUser) {
+        forms.forEach((f, fi) => {
+          const owned = (row[6] || []).includes(f);
+          const uid = `btn-${i}-${fi}`;
+          tracking += `<button id="${uid}" class="form-btn ${owned?'owned-btn':''}" onclick="markOwned('${row[0].replace(/'/g,"\\'")}', '${f}', '${uid}')" ${owned?'disabled':''}>${f} ${owned?'🐾':'+'}</button>`;
+        });
+      }
+      curGrid.innerHTML += `<div class="card"><img src="${row[5]}" class="meemeow-img"><p><b>${row[0]}</b></p><div class="forms-container">${tracking}</div></div>`;
+    });
+  }
+
+  function openContactModal() { document.getElementById('contactModal').style.display = 'block'; }
+  function closeContactModal() { document.getElementById('contactModal').style.display = 'none'; }
+  function submitContactForm() {
+    const e = document.getElementById('contactEmail').value;
+    const d = document.getElementById('contactDescription').value;
+    if(!e || !d) return alert("Fill out all fields! 🐾");
+    google.script.run.withSuccessHandler(() => { alert("Message sent! ✨"); closeContactModal(); }).sendContactEmail(e, d);
   }
 </script>
