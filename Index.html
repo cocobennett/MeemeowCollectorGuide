@@ -36,9 +36,9 @@
       <div class="contact-form">
         <input type="email" id="authEmail" placeholder="Email">
         <input type="password" id="authPassword" placeholder="Password">
-        <button onclick="handleAuthSubmit()" id="authSubmitBtn">Login ✨</button>
+        <button onclick="handleAuthSubmit(event)" id="authSubmitBtn" class="contact-btn">Login ✨</button>
         <p style="font-size: 0.8em; margin-top:10px;">
-          <a href="#" id="authToggle" onclick="switchAuthMode()">Need an account? Register here!</a>
+          <a href="javascript:void(0)" id="authToggle" onclick="switchAuthMode()">Need an account? Register here!</a>
         </p>
       </div>
     </div>
