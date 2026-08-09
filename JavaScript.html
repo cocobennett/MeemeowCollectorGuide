@@ -27,6 +27,7 @@
     const title = document.getElementById('mainTitle');
     const banner = document.getElementById('loginBanner');
     const listFilter = document.getElementById('listFilter');
+    const manageListsBtn = document.getElementById('manageListsBtn'); // Phase 2
 
     if (authUI) {
         if (currentUser) {
@@ -36,9 +37,11 @@
                     <button onclick="handleLogout()" class="logout-btn">Sign Out 🐾</button>
                 </div>`;
             if (listFilter) listFilter.style.display = 'inline-block';
+            if (manageListsBtn) manageListsBtn.style.display = 'inline-block';
         } else {
             authUI.innerHTML = `<button onclick="toggleAuthModal(true)" class="login-link">Login 🐾</button>`;
             if (listFilter) listFilter.style.display = 'none';
+            if (manageListsBtn) manageListsBtn.style.display = 'none';
         }
     }
 
@@ -235,7 +238,7 @@
     });
   }
 
-  // --- Modal List Management ---
+  // --- Add to List Modal ---
   function openListModal(catName, form) {
     if (!currentUser) return alert("Please login first! 🐾");
     currentCatSelection = { name: catName, form: form };
@@ -300,6 +303,78 @@
          btn.disabled = false;
       })
       .updateCatLists(currentUser, currentCatSelection.name, currentCatSelection.form, listsToAdd, listsToRemove);
+  }
+
+  // --- PHASE 2: List Manager Modal ---
+  function openManagerModal() {
+    if (!currentUser) return;
+    const container = document.getElementById('managerListContainer');
+    container.innerHTML = userLists.map(list => {
+      if (list === "Collected") {
+        return `
+          <div class="manager-row">
+            <span class="manager-name"><strong>${list}</strong> (Default)</span>
+          </div>`;
+      }
+      return `
+        <div class="manager-row">
+          <span class="manager-name">${list}</span>
+          <div class="manager-actions">
+            <button class="manager-btn btn-edit" onclick="promptRenameList('${list}')">✏️</button>
+            <button class="manager-btn btn-delete" onclick="promptDeleteList('${list}')">🗑️</button>
+          </div>
+        </div>`;
+    }).join('');
+    document.getElementById('managerModal').style.display = 'block';
+  }
+
+  function closeManagerModal() {
+    document.getElementById('managerModal').style.display = 'none';
+  }
+
+  function promptRenameList(oldName) {
+    const newName = prompt(`What would you like to rename '${oldName}' to? ✨`, oldName);
+    if (!newName || newName.trim() === "" || newName === oldName) return;
+    
+    document.getElementById('loading-container').style.display = 'flex';
+    document.getElementById('list').style.display = 'none';
+    closeManagerModal();
+
+    google.script.run
+      .withSuccessHandler(() => {
+         google.script.run.withSuccessHandler(data => {
+            initializeStore(data);
+            openManagerModal(); 
+         }).getMeeMeows(currentUser);
+      })
+      .withFailureHandler(err => {
+         alert("Error renaming list: " + err);
+         document.getElementById('loading-container').style.display = 'none';
+         document.getElementById('list').style.display = 'block';
+      })
+      .renameUserList(currentUser, oldName, newName);
+  }
+
+  function promptDeleteList(listName) {
+    if (!confirm(`Are you sure you want to completely delete the '${listName}' list? Any cats tracked on this list will lose their tag! 😿`)) return;
+    
+    document.getElementById('loading-container').style.display = 'flex';
+    document.getElementById('list').style.display = 'none';
+    closeManagerModal();
+
+    google.script.run
+      .withSuccessHandler(() => {
+         google.script.run.withSuccessHandler(data => {
+            initializeStore(data);
+            openManagerModal();
+         }).getMeeMeows(currentUser);
+      })
+      .withFailureHandler(err => {
+         alert("Error deleting list: " + err);
+         document.getElementById('loading-container').style.display = 'none';
+         document.getElementById('list').style.display = 'block';
+      })
+      .deleteUserList(currentUser, listName);
   }
 
   function openContactModal() { document.getElementById('contactModal').style.display = 'block'; }

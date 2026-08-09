@@ -637,4 +637,58 @@
     font-weight: bold;
     color: #555;
   }
+  /* --- Stage 2 Updates: List Manager UI --- */
+  
+  .manager-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff9fb;
+    border: 2px solid var(--coco-blue);
+    padding: 10px 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    transition: transform 0.2s;
+  }
+  
+  .manager-row:hover {
+    transform: scale(1.02);
+    border-color: var(--coco-pink);
+  }
+  
+  .manager-name {
+    font-family: 'Comic Sans MS', cursive;
+    font-weight: bold;
+    color: #555;
+    font-size: 16px;
+  }
+  
+  .manager-actions {
+    display: flex;
+    gap: 8px;
+  }
+  
+  .manager-btn {
+    background: white;
+    border: 2px solid #ddd;
+    border-radius: 50%;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.2s, border-color 0.2s;
+  }
+  
+  .btn-edit:hover {
+    background-color: var(--coco-pink);
+    border-color: var(--coco-pink);
+  }
+  
+  .btn-delete:hover {
+    background-color: #ff9db2; /* Slightly darker pink/red */
+    border-color: #ff9db2;
+  }
 </style>

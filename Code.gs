@@ -161,6 +161,76 @@ function updateCatLists(userEmail, meemeowId, form, listsToAdd, listsToRemove) {
   return true;
 }
 
+/**
+ * PHASE 2: RENAME AND DELETE LISTS
+ */
+function renameUserList(userEmail, oldName, newName) {
+  if (!userEmail) throw new Error("Login required! 🐾");
+  if (oldName === "Collected") throw new Error("Cannot rename the default list! 🐾");
+  
+  const cleanEmail = userEmail.toLowerCase().trim();
+  const cleanOld = oldName.trim();
+  const cleanNew = newName.trim();
+  
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const listsSheet = ss.getSheetByName("UserLists");
+  const userSheet = ss.getSheetByName("UserData");
+  
+  if (listsSheet) {
+    const listsData = listsSheet.getDataRange().getValues();
+    // Prevent duplicate names
+    const exists = listsData.some(row => row[0].toString().toLowerCase() === cleanEmail && row[1].toString().toLowerCase() === cleanNew.toLowerCase());
+    if (exists && cleanOld.toLowerCase() !== cleanNew.toLowerCase()) throw new Error("A list with that name already exists! ✨");
+    
+    for (let i = 1; i < listsData.length; i++) {
+      if (listsData[i][0].toString().toLowerCase() === cleanEmail && listsData[i][1].toString() === cleanOld) {
+        listsSheet.getRange(i + 1, 2).setValue(cleanNew);
+      }
+    }
+  }
+  
+  if (userSheet) {
+    const userData = userSheet.getDataRange().getValues();
+    for (let i = 1; i < userData.length; i++) {
+      if (userData[i][0].toString().toLowerCase() === cleanEmail && userData[i][2].toString() === cleanOld) {
+        userSheet.getRange(i + 1, 3).setValue(cleanNew);
+      }
+    }
+  }
+  return true;
+}
+
+function deleteUserList(userEmail, listName) {
+  if (!userEmail) throw new Error("Login required! 🐾");
+  if (listName === "Collected") throw new Error("Cannot delete the default list! 🐾");
+  
+  const cleanEmail = userEmail.toLowerCase().trim();
+  const cleanName = listName.trim();
+  
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const listsSheet = ss.getSheetByName("UserLists");
+  const userSheet = ss.getSheetByName("UserData");
+  
+  if (listsSheet) {
+    const listsData = listsSheet.getDataRange().getValues();
+    for (let i = listsData.length - 1; i >= 1; i--) {
+      if (listsData[i][0].toString().toLowerCase() === cleanEmail && listsData[i][1].toString() === cleanName) {
+        listsSheet.deleteRow(i + 1);
+      }
+    }
+  }
+  
+  if (userSheet) {
+    const userData = userSheet.getDataRange().getValues();
+    for (let i = userData.length - 1; i >= 1; i--) {
+      if (userData[i][0].toString().toLowerCase() === cleanEmail && userData[i][2].toString() === cleanName) {
+        userSheet.deleteRow(i + 1);
+      }
+    }
+  }
+  return true;
+}
+
 function sendContactEmail(userEmail, description) {
   MailApp.sendEmail({
     to: "cocoscreations1130@gmail.com",

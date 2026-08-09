@@ -20,6 +20,8 @@
     <select id="seriesFilter" onchange="applyFilters()"><option value="all">All Series ✨</option></select>
     <select id="formFilter" onchange="applyFilters()"><option value="all">All Forms ✨</option></select>
     <select id="listFilter" onchange="applyFilters()" style="display:none;"><option value="all">My Lists ✨</option></select>
+    <!-- PHASE 2 BUTTON -->
+    <button id="manageListsBtn" onclick="openManagerModal()" class="contact-btn" style="display:none; background-color: var(--coco-pink);">Manage Lists ✏️</button>
     <button onclick="openContactModal()" class="contact-btn">Contact Me 💌</button>
   </div>
 
@@ -46,7 +48,7 @@
     </div>
   </div>
 
-  <!-- List Management Modal -->
+  <!-- Add to List Modal (From Stage 1) -->
   <div id="listModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeListModal()">&times;</span>
@@ -62,6 +64,18 @@
       </div>
       
       <button onclick="saveListSelections()" class="contact-btn" style="width: 100%; margin-top: 15px;" id="saveListBtn">Save Changes ✨</button>
+    </div>
+  </div>
+
+  <!-- PHASE 2: List Manager Modal -->
+  <div id="managerModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeManagerModal()">&times;</span>
+      <h3>Manage My Lists 🐾</h3>
+      <p style="font-size: 0.85em; color: #555;">Rename or delete your custom lists here!</p>
+      <div id="managerListContainer" style="margin-top: 15px; max-height: 250px; overflow-y: auto; padding-right: 10px;">
+        <!-- Editable lists generated dynamically -->
+      </div>
     </div>
   </div>
 
