@@ -1,10 +1,11 @@
 <script>
   let allMeeMeows = [];
+  let userLists = [];
   let isRegisterMode = false;
   let currentUser = localStorage.getItem('meemeow_user') || null;
   let currentUserName = localStorage.getItem('meemeow_name') || "Guest";
+  let currentCatSelection = { name: "", form: "" };
 
-  // --- Start Up Logic ---
   window.addEventListener('DOMContentLoaded', () => {
     updateUI();
     google.script.run
@@ -14,17 +15,19 @@
   });
 
   function initializeStore(data) {
-    allMeeMeows = data;
-    populateDropdowns(data);
-    showCats(data);
+    allMeeMeows = data.cats;
+    userLists = data.lists || ["Collected"];
+    populateDropdowns(data.cats);
+    populateListDropdown();
+    showCats(data.cats);
   }
 
-function updateUI() {
+  function updateUI() {
     const authUI = document.getElementById('authUI');
     const title = document.getElementById('mainTitle');
     const banner = document.getElementById('loginBanner');
+    const listFilter = document.getElementById('listFilter');
 
-    // 1. Update the Auth Buttons (Login link vs User Pill)
     if (authUI) {
         if (currentUser) {
             authUI.innerHTML = `
@@ -32,23 +35,16 @@ function updateUI() {
                     <span>🐾 ${currentUserName}</span>
                     <button onclick="handleLogout()" class="logout-btn">Sign Out 🐾</button>
                 </div>`;
+            if (listFilter) listFilter.style.display = 'inline-block';
         } else {
             authUI.innerHTML = `<button onclick="toggleAuthModal(true)" class="login-link">Login 🐾</button>`;
+            if (listFilter) listFilter.style.display = 'none';
         }
     }
 
-    // 2. Update the Page Title (Reset to generic if no currentUser)
-    if (title) {
-        title.innerText = currentUser 
-            ? `✨ ${currentUserName}'s MeeMeow Collector's Guide ✨` 
-            : `✨ MeeMeow Collector's Guide ✨`;
-    }
-
-    // 3. Update the Login Banner visibility
-    if (banner) {
-        banner.style.display = currentUser ? 'none' : 'block';
-    }
-}
+    if (title) title.innerText = currentUser ? `✨ ${currentUserName}'s MeeMeow Collector's Guide ✨` : `✨ MeeMeow Collector's Guide ✨`;
+    if (banner) banner.style.display = currentUser ? 'none' : 'block';
+  }
 
   function toggleAuthModal(show) { 
     const modal = document.getElementById('authModal');
@@ -66,125 +62,118 @@ function updateUI() {
     if (toggle) toggle.innerText = isRegisterMode ? "Have an account? Login" : "Need an account? Register!";
   }
 
-function handleAuthSubmit(event) {
+  function handleAuthSubmit(event) {
     if (event) event.preventDefault();
-
     const email = document.getElementById('authEmail').value;
     const pwd = document.getElementById('authPassword').value;
     const btn = document.getElementById('authSubmitBtn');
     
     if (!email || !pwd) return alert("Please fill in both fields! 🐾");
-
     btn.disabled = true;
     btn.innerText = "Processing...";
 
     if (isRegisterMode) {
       google.script.run
         .withSuccessHandler(res => {
-          btn.disabled = false;
-          btn.innerText = "Login ✨";
+          btn.disabled = false; btn.innerText = "Login ✨";
           alert(res.message || res);
           switchAuthMode(); 
         })
         .withFailureHandler(err => { 
           alert("Registration Error: " + err); 
-          btn.disabled = false; 
-          btn.innerText = "Register ✨"; 
+          btn.disabled = false; btn.innerText = "Register ✨"; 
         })
         .registerUser(email, pwd);
     } else {
-      // LOGIN LOGIC - Now updates UI without reload
       google.script.run
         .withSuccessHandler(user => {
-          // 1. Save to localStorage
           localStorage.setItem('meemeow_user', user.email);
           localStorage.setItem('meemeow_name', user.name);
-          
-          // 2. Update local variables
-          currentUser = user.email;
-          currentUserName = user.name;
-          
-          // 3. Update the UI directly
+          currentUser = user.email; currentUserName = user.name;
           toggleAuthModal(false);
           updateUI();
-          
-          // 4. Fetch the user's specific collection
-          google.script.run
-            .withSuccessHandler(initializeStore)
-            .getMeeMeows(currentUser);
+          document.getElementById('loading-container').style.display = 'flex';
+          document.getElementById('list').style.display = 'none';
+          google.script.run.withSuccessHandler(initializeStore).getMeeMeows(currentUser);
         })
         .withFailureHandler(err => { 
           alert("Login Error: " + err); 
-          btn.disabled = false; 
-          btn.innerText = "Login ✨"; 
+          btn.disabled = false; btn.innerText = "Login ✨"; 
         })
         .loginUser(email, pwd);
     }
-}
+  }
 
   function handleLogout() {
-    // 1. Clear session
     localStorage.removeItem('meemeow_user');
     localStorage.removeItem('meemeow_name');
-    
-    // 2. Reset variables
-    currentUser = null;
-    currentUserName = "Guest";
-    
-    // 3. Update UI to "Logged Out" state
+    currentUser = null; currentUserName = "Guest";
     updateUI();
-    
-    // 4. Reload the cat list as a guest
     document.getElementById('loading-container').style.display = 'flex';
     document.getElementById('list').style.display = 'none';
     google.script.run.withSuccessHandler(initializeStore).getMeeMeows(null);
-  }
-
-  function markOwned(name, form, btnId) {
-    if (!currentUser) return alert("Please login first! 🐾");
-    const btn = document.getElementById(btnId);
-    btn.innerText = "Saving...";
-    btn.disabled = true;
-
-    google.script.run
-      .withSuccessHandler(() => { btn.innerText = form + " 🐾"; btn.classList.add('owned-btn'); })
-      .withFailureHandler(err => { alert(err); btn.disabled = false; })
-      .toggleOwned(currentUser, name, form);
   }
 
   function populateDropdowns(data) {
     const seriesDD = document.getElementById('seriesFilter');
     const formDD = document.getElementById('formFilter');
     if (!seriesDD || !formDD) return;
+    
+    seriesDD.innerHTML = '<option value="all">All Series ✨</option>';
+    formDD.innerHTML = '<option value="all">All Forms ✨</option>';
+    
     const series = [...new Set(data.slice(1).map(r => r[1]))].sort();
     const forms = [...new Set(data.slice(1).map(r => r[3] ? r[3].split(',') : []).flat().map(f => f.trim()))].sort();
+    
     series.forEach(s => { if(s){ let o = document.createElement('option'); o.value=o.innerHTML=s; seriesDD.appendChild(o); }});
     forms.forEach(f => { if(f){ let o = document.createElement('option'); o.value=o.innerHTML=f; formDD.appendChild(o); }});
+  }
+
+  function populateListDropdown() {
+    const listDD = document.getElementById('listFilter');
+    if (!listDD) return;
+    listDD.innerHTML = '<option value="all">My Lists ✨</option>';
+    userLists.forEach(l => {
+        let o = document.createElement('option'); o.value=o.innerHTML=l; listDD.appendChild(o);
+    });
   }
 
   function applyFilters() {
     const search = document.getElementById('searchInput').value.toLowerCase();
     const sVal = document.getElementById('seriesFilter').value;
     const fVal = document.getElementById('formFilter').value;
+    const lVal = document.getElementById('listFilter').value;
+    
     const filtered = allMeeMeows.filter((r, i) => {
       if (i === 0) return false;
       const cats = r[3] ? r[3].split(',').map(f => f.trim()) : [];
-      return r[0].toLowerCase().includes(search) && (sVal === "all" || r[1] === sVal) && (fVal === "all" || cats.includes(fVal));
+      const myForms = r[6] || {};
+      
+      let inList = false;
+      if (lVal === "all") {
+          inList = true;
+      } else {
+          Object.values(myForms).forEach(lists => {
+              if (lists.includes(lVal)) inList = true;
+          });
+      }
+
+      return r[0].toLowerCase().includes(search) && 
+             (sVal === "all" || r[1] === sVal) && 
+             (fVal === "all" || cats.includes(fVal)) &&
+             inList;
     });
     showCats([allMeeMeows[0], ...filtered]);
   }
 
-// Helper to convert Rarity text into your custom icons 🐾
   function getRarityIcon(rarityText) {
     if (!rarityText) return "";
     const rarity = rarityText.toLowerCase().trim();
-    
     if (rarity.includes("common") && !rarity.includes("uncommon")) return "🐾";
     if (rarity.includes("uncommon")) return "❤️";
-    if (rarity.includes("ultra rare")) return "✨"; // Check for Ultra Rare first
+    if (rarity.includes("ultra rare")) return "✨"; 
     if (rarity.includes("rare")) return "⭐";
-    
-    return ""; // Default if empty
+    return ""; 
   }
 
   function showCats(data) {
@@ -195,7 +184,7 @@ function handleAuthSubmit(event) {
     container.style.display = 'block';
     container.innerHTML = '';
 
-    let sorted = data.slice(1).reverse(); //.sort((a, b) => a[1] < b[1] ? -1 : 1);
+    let sorted = data.slice(1).reverse(); 
     let curSeries = ""; let curGrid = null;
 
     sorted.forEach((row, i) => {
@@ -205,19 +194,31 @@ function handleAuthSubmit(event) {
         curGrid = document.createElement('div'); curGrid.className = 'series-grid'; container.appendChild(curGrid);
       }
 
-      // --- NEW: Rarity Icon Logic ---
-      // We assume Rarity is in row[4] based on your getMeeMeows mapping
       const rarityValue = row[4] || "Common"; 
       const rarityIcon = getRarityIcon(rarityValue);
-
       const forms = (row[3] || "").split(',').map(f => f.trim());
+      const myForms = row[6] || {};
+      
       let tracking = currentUser ? "" : `<p style="font-size:0.8em;color:#888;">🐾 Login to track</p>`;
       
       if(currentUser) {
         forms.forEach((f, fi) => {
-          const owned = (row[6] || []).includes(f);
+          const activeLists = myForms[f] || [];
           const uid = `btn-${i}-${fi}`;
-          tracking += `<button id="${uid}" class="form-btn ${owned?'owned-btn':''}" onclick="markOwned('${row[0].replace(/'/g,"\\'")}', '${f}', '${uid}')" ${owned?'disabled':''}>${f} ${owned?'🐾':'+'}</button>`;
+          
+          let tagsHtml = '';
+          activeLists.forEach((list, idx) => {
+            const tagClass = idx % 2 === 0 ? 'tag-pink' : 'tag-blue';
+            tagsHtml += `<span class="list-tag ${tagClass}">${list}</span>`;
+          });
+          
+          tracking += `
+          <div style="display: flex; flex-direction: column; align-items: center; margin: 3px; width: 100%;">
+            <button id="${uid}" class="form-btn" onclick="openListModal('${row[0].replace(/'/g,"\\'")}', '${f}')" style="width: 100%; box-sizing: border-box;">${f} ➕</button>
+            <div style="display: flex; flex-wrap: wrap; gap: 3px; justify-content: center; margin-top: 4px;">
+              ${tagsHtml}
+            </div>
+          </div>`;
         });
       }
 
@@ -229,9 +230,76 @@ function handleAuthSubmit(event) {
           </div>
           <img src="${row[5]}" class="meemeow-img">
           <p><b>${row[0]}</b></p>
-          <div class="forms-container">${tracking}</div>
+          <div class="forms-container" style="flex-direction: column; padding: 5px;">${tracking}</div>
         </div>`;
     });
+  }
+
+  // --- Modal List Management ---
+  function openListModal(catName, form) {
+    if (!currentUser) return alert("Please login first! 🐾");
+    currentCatSelection = { name: catName, form: form };
+    
+    document.getElementById('listModalCatName').innerText = `${catName} (${form})`;
+    document.getElementById('newListName').value = "";
+    
+    const catData = allMeeMeows.find(r => r[0] === catName);
+    const activeLists = (catData && catData[6] && catData[6][form]) ? catData[6][form] : [];
+    
+    const container = document.getElementById('existingListsContainer');
+    container.innerHTML = userLists.map(list => {
+      const isChecked = activeLists.includes(list) ? 'checked' : '';
+      return `
+        <label class="list-checkbox-label">
+          <input type="checkbox" class="list-checkbox" value="${list}" ${isChecked}> 
+          <span>${list}</span>
+        </label>
+      `;
+    }).join('');
+    
+    document.getElementById('listModal').style.display = 'block';
+  }
+
+  function closeListModal() {
+    document.getElementById('listModal').style.display = 'none';
+  }
+
+  function saveListSelections() {
+    const checkboxes = document.querySelectorAll('.list-checkbox');
+    const selectedLists = Array.from(checkboxes).filter(cb => cb.checked).map(cb => cb.value);
+    const newListName = document.getElementById('newListName').value.trim();
+    const btn = document.getElementById('saveListBtn');
+    
+    if (newListName && !userLists.includes(newListName)) {
+        selectedLists.push(newListName);
+    }
+
+    const catData = allMeeMeows.find(r => r[0] === currentCatSelection.name);
+    const activeLists = (catData && catData[6] && catData[6][currentCatSelection.form]) ? catData[6][currentCatSelection.form] : [];
+    
+    const listsToAdd = selectedLists.filter(l => !activeLists.includes(l));
+    const listsToRemove = activeLists.filter(l => !selectedLists.includes(l));
+
+    if (listsToAdd.length === 0 && listsToRemove.length === 0) return closeListModal();
+
+    btn.innerText = "Saving... 🐾";
+    btn.disabled = true;
+    
+    google.script.run
+      .withSuccessHandler(() => {
+         btn.innerText = "Save Changes ✨";
+         btn.disabled = false;
+         closeListModal();
+         document.getElementById('loading-container').style.display = 'flex';
+         document.getElementById('list').style.display = 'none';
+         google.script.run.withSuccessHandler(initializeStore).getMeeMeows(currentUser);
+      })
+      .withFailureHandler(err => {
+         alert("Error saving: " + err);
+         btn.innerText = "Save Changes ✨";
+         btn.disabled = false;
+      })
+      .updateCatLists(currentUser, currentCatSelection.name, currentCatSelection.form, listsToAdd, listsToRemove);
   }
 
   function openContactModal() { document.getElementById('contactModal').style.display = 'block'; }

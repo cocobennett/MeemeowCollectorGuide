@@ -52,40 +52,112 @@ function loginUser(email, password) {
 }
 
 /**
- * DATA FETCHING
+ * DATA FETCHING & LIST MANAGEMENT
  */
 function getMeeMeows(userEmail) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const masterSheet = ss.getSheetByName("MasterList");
   const userSheet = ss.getSheetByName("UserData");
+  const listsSheet = ss.getSheetByName("UserLists") || ss.insertSheet("UserLists");
+  
   const masterData = masterSheet.getDataRange().getValues();
   
-  let ownedItems = [];
+  let userData = [];
+  let userLists = ["Collected"]; // Default base list
+  
   if (userEmail) {
-    const userData = userSheet.getDataRange().getValues();
-    ownedItems = userData
-      .filter(row => row[0] && row[0].toString().toLowerCase() === userEmail.toLowerCase())
-      .map(row => row[1].toString().trim() + "|" + row[3].toString().trim());
+    const cleanEmail = userEmail.toLowerCase().trim();
+    
+    // Fetch user's catalog data
+    const allUserData = userSheet.getDataRange().getValues();
+    userData = allUserData.filter(row => row[0] && row[0].toString().toLowerCase() === cleanEmail);
+    
+    // Fetch custom lists
+    const allLists = listsSheet.getDataRange().getValues();
+    const customLists = allLists.filter(row => row[0] && row[0].toString().toLowerCase() === cleanEmail)
+                                .map(row => row[1].toString().trim());
+    
+    // Combine unique lists
+    userLists = [...new Set([...userLists, ...customLists])];
   }
 
-  return masterData.map((row, index) => {
-    if (index === 0) return [...row, "OwnedForms"];
+  const cats = masterData.map((row, index) => {
+    if (index === 0) return [...row, "UserForms"];
+    
     let url = (row[5] || "").toString();
     if (url.includes("drive.google.com")) {
       url = url.replace("file/d/", "uc?export=view&id=").replace(/\/view.*$/, "");
     }
-    const myOwnedForms = ownedItems
-      .filter(item => item.startsWith(row[0] + "|"))
-      .map(item => item.split("|")[1]);
-    return [row[0], row[1], row[2], row[3], row[4], url, myOwnedForms];
+    
+    // Map forms to their specific lists for this cat
+    const myForms = {};
+    if (userData.length > 0) {
+        userData.forEach(uRow => {
+            if (uRow[1].toString().trim() === row[0].toString().trim()) {
+                const listName = uRow[2].toString().trim();
+                const formName = uRow[3].toString().trim();
+                if (!myForms[formName]) myForms[formName] = [];
+                myForms[formName].push(listName);
+            }
+        });
+    }
+    
+    return [row[0], row[1], row[2], row[3], row[4], url, myForms];
   });
+  
+  return { cats: cats, lists: userLists };
 }
 
-function toggleOwned(userEmail, meemeowId, form) {
+function updateCatLists(userEmail, meemeowId, form, listsToAdd, listsToRemove) {
   if (!userEmail) throw new Error("Login required! 🐾");
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const userSheet = ss.getSheetByName("UserData");
-  userSheet.appendRow([userEmail, meemeowId, "Owned", form, new Date()]);
+  const listsSheet = ss.getSheetByName("UserLists") || ss.insertSheet("UserLists");
+  const cleanEmail = userEmail.toLowerCase().trim();
+  
+  // 1. Handle New List Creation
+  const allListsData = listsSheet.getDataRange().getValues();
+  const existingUserLists = allListsData.filter(row => row[0].toString().toLowerCase() === cleanEmail)
+                                        .map(row => row[1].toString().trim().toLowerCase());
+  
+  listsToAdd.forEach(list => {
+    if (!existingUserLists.includes(list.toLowerCase())) {
+       listsSheet.appendRow([cleanEmail, list.trim(), new Date()]);
+       existingUserLists.push(list.toLowerCase());
+    }
+  });
+
+  const data = userSheet.getDataRange().getValues();
+  
+  // 2. Remove Unchecked Lists
+  if (listsToRemove.length > 0) {
+    for (let i = data.length - 1; i >= 1; i--) {
+      if (data[i][0].toString().toLowerCase() === cleanEmail && 
+          data[i][1].toString() === meemeowId && 
+          data[i][3].toString() === form) {
+          
+          if (listsToRemove.includes(data[i][2].toString().trim())) {
+              userSheet.deleteRow(i + 1);
+          }
+      }
+    }
+  }
+  
+  // 3. Add Checked Lists (Verify it doesn't already exist to prevent dupes)
+  const updatedData = userSheet.getDataRange().getValues(); 
+  
+  listsToAdd.forEach(list => {
+    const exists = updatedData.some(row => 
+        row[0].toString().toLowerCase() === cleanEmail && 
+        row[1].toString() === meemeowId && 
+        row[2].toString() === list && 
+        row[3].toString() === form
+    );
+    if (!exists) {
+        userSheet.appendRow([cleanEmail, meemeowId, list.trim(), form, new Date()]);
+    }
+  });
+  
   return true;
 }
 

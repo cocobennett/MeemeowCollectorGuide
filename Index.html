@@ -19,6 +19,7 @@
     <input type="text" id="searchInput" onkeyup="applyFilters()" placeholder="Search cats... 🐾">
     <select id="seriesFilter" onchange="applyFilters()"><option value="all">All Series ✨</option></select>
     <select id="formFilter" onchange="applyFilters()"><option value="all">All Forms ✨</option></select>
+    <select id="listFilter" onchange="applyFilters()" style="display:none;"><option value="all">My Lists ✨</option></select>
     <button onclick="openContactModal()" class="contact-btn">Contact Me 💌</button>
   </div>
 
@@ -29,6 +30,7 @@
 
   <div id="list" style="display: none;"></div>
 
+  <!-- Authentication Modal -->
   <div id="authModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="toggleAuthModal(false)">&times;</span>
@@ -44,18 +46,26 @@
     </div>
   </div>
 
-  <footer class="coco-footer">
-    <div class="footer-content">
-      <p>🐾 <b>MeeMeow Links</b> 🐾</p>
-      <div class="footer-links">
-        <a href="https://www.aphmeow.com/meemeows" target="_blank">Official Aphmau Website</a>
-        <a href="https://www.youtube.com/@CocosCreations1130" target="_blank">Watch the maker of this websites's Youtube Channel, Coco's Creations!</a>
-        <a href="https://www.youtube.com/@Aphmau" target="_blank">Watch Aphmau's Channel</a>
+  <!-- List Management Modal -->
+  <div id="listModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closeListModal()">&times;</span>
+      <h3 id="listModalTitle">Add to List 🐾</h3>
+      <p id="listModalCatName" style="color: var(--coco-pink); font-weight: bold; margin-top:-10px;"></p>
+      
+      <div id="existingListsContainer" style="text-align: left; margin: 15px 0; max-height: 150px; overflow-y: auto; padding-right: 10px;">
+        <!-- Checkboxes generated dynamically -->
       </div>
-      <p class="footer-credit">Created with ✨ for Coco's Creations</p>
+      
+      <div style="margin-top: 15px; text-align: left; border-top: 2px dashed var(--coco-blue); padding-top: 15px;">
+        <input type="text" id="newListName" placeholder="Create a new list... ✨" style="width: calc(100% - 24px); padding: 8px; border: 2px solid var(--coco-pink); border-radius: 10px; font-family: 'Comic Sans MS', cursive;">
+      </div>
+      
+      <button onclick="saveListSelections()" class="contact-btn" style="width: 100%; margin-top: 15px;" id="saveListBtn">Save Changes ✨</button>
     </div>
-  </footer>
+  </div>
 
+  <!-- Contact Modal -->
   <div id="contactModal" class="modal">
     <div class="modal-content">
       <span class="close-btn" onclick="closeContactModal()">&times;</span>
@@ -67,6 +77,18 @@
       </div>
     </div>
   </div>
+
+  <footer class="coco-footer">
+    <div class="footer-content">
+      <p>🐾 <b>MeeMeow Links</b> 🐾</p>
+      <div class="footer-links">
+        <a href="https://www.aphmeow.com/meemeows" target="_blank">Official Aphmau Website</a>
+        <a href="https://www.youtube.com/@CocosCreations1130" target="_blank">Watch the maker of this websites's Youtube Channel, Coco's Creations!</a>
+        <a href="https://www.youtube.com/@Aphmau" target="_blank">Watch Aphmau's Channel</a>
+      </div>
+      <p class="footer-credit">Created with ✨ for Coco's Creations</p>
+    </div>
+  </footer>
 
   <?!= include('JavaScript'); ?>
 </body>
