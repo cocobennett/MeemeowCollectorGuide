@@ -27,3 +27,7 @@ After making changes, click **Deploy** -> **New development** -> **Deploy** to s
 ### Domain
 
 Domain meemeowtracker.com hosted on Cloudflare
+
+To update which deployment version is live, go to `Workers & Pages` by searching in Cloudflare
+
+Next go to `meemeow-iframee` deployments and upload the new cloudflare/index.html with the updated https://script.google.com/macros/s/***/exec file
