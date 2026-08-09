@@ -195,7 +195,7 @@ function handleAuthSubmit(event) {
     container.style.display = 'block';
     container.innerHTML = '';
 
-    let sorted = data.slice(1).sort((a, b) => a[1] < b[1] ? -1 : 1);
+    let sorted = data.slice(1).reverse(); //.sort((a, b) => a[1] < b[1] ? -1 : 1);
     let curSeries = ""; let curGrid = null;
 
     sorted.forEach((row, i) => {
